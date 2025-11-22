@@ -12,13 +12,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
-app.secret_key = 'lottery_master_key_final_v7' # 密钥
+app.secret_key = 'lottery_master_key_final_v7'
 
 # --- 2. 数据库配置 ---
 db_path = os.path.join(os.path.dirname(__file__), 'data')
 if not os.path.exists(db_path):
     os.makedirs(db_path)
-# 使用 v7 作为新数据库名，确保隔离
+
+# ★★★ 关键：保持文件名与 V7.0/7.1 一致，以读取旧数据 ★★★
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(db_path, "lottery_v7.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -30,13 +31,13 @@ login_manager.login_view = 'login'
 # 全局调度器
 scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
 
-# --- 3. 数据库模型 ---
+# --- 3. 数据库模型 (保持不变) ---
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    sckey = db.Column(db.String(100)) # Server酱 Key
+    sckey = db.Column(db.String(100))
     tickets = db.relationship('MyTicket', backref='owner', lazy=True)
 
 class MyTicket(db.Model):
@@ -50,7 +51,7 @@ class MyTicket(db.Model):
 
 class AppSetting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    push_time = db.Column(db.String(10), default="22:00") # 默认推送时间
+    push_time = db.Column(db.String(10), default="22:00")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -78,14 +79,13 @@ def get_latest_lottery():
                 'date': item['lotteryDrawTime'],
                 'red': nums[:5],
                 'blue': nums[5:],
-                'pool': raw_pool.replace(',', '') # 去除金额中的逗号
+                'pool': raw_pool.replace(',', '')
             }
     except Exception as e:
         logging.error(f"API Error: {e}")
     return None
 
 def get_recent_draws(limit=50):
-    """获取最近N期历史数据 (用于往期查询)"""
     url = f"https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize={limit}&isVerify=1&pageNo=1"
     draws = {}
     try:
@@ -101,7 +101,6 @@ def get_recent_draws(limit=50):
     return draws
 
 def analyze_ticket(ticket_red, ticket_blue, open_red, open_blue):
-    """核心兑奖算法"""
     if not open_red: return "等待开奖", 0, [], []
     u_r, u_b = set(ticket_red.split(',')), set(ticket_blue.split(','))
     o_r, o_b = set(open_red), set(open_blue)
@@ -126,33 +125,40 @@ def analyze_ticket(ticket_red, ticket_blue, open_red, open_blue):
     return level, prize, hit_reds, hit_blues
 
 def run_check_for_user(user, force=False):
-    """执行检查并推送 (针对单个用户)"""
+    """执行检查并推送 (V7.2 修改：展示所有号码详情)"""
     if not user.sckey or not user.tickets: return False, "未配置 Key 或无号码"
     result = get_latest_lottery()
     if not result: return False, "无法获取API数据"
     
-    # 如果不是强制推送，且今天没开奖，则跳过
     if not force and result['date'] != datetime.now().strftime("%Y-%m-%d"): return False, "今日无开奖"
 
     msg_lines = [f"### 📅 期号: {result['term']}", f"🔴 **{','.join(result['red'])}**  🔵 **{','.join(result['blue'])}**", "---"]
     total_prize, win_count, active_count = 0, 0, 0
     
     for t in user.tickets:
-        # 只检查有效期内的彩票
         if t.start_term <= result['term'] <= t.end_term:
             active_count += 1
             lvl, prz, _, _ = analyze_ticket(t.red_nums, t.blue_nums, result['red'], result['blue'])
+            
+            # --- V7.2 修改开始：无论是否中奖，都记录信息 ---
             if prz > 0:
-                win_count += 1; total_prize += prz
+                win_count += 1
+                total_prize += prz
+                # 中奖：加粗 + 礼物图标
                 msg_lines.append(f"- 🎁 **{lvl} (￥{prz})**: {t.note or '自选'}")
-                msg_lines.append(f"  `{t.red_nums} + {t.blue_nums}`")
-            # else: msg_lines.append(f"- {lvl}: {t.note}") # 未中奖是否显示可选
+            else:
+                # 未中奖：普通显示
+                msg_lines.append(f"- {lvl}: {t.note or '自选'}")
+            
+            # 统一显示号码，方便核对
+            msg_lines.append(f"  `{t.red_nums} + {t.blue_nums}`")
+            # --- V7.2 修改结束 ---
     
     if active_count == 0 and not force: return False, "无有效彩票"
     
     title = f"大乐透 {result['term']} 结果"
     if win_count > 0: title = f"🎉 中奖￥{total_prize} - " + title
-    else: msg_lines.append("本期未中奖")
+    else: msg_lines.append("\n**本期暂未中奖，继续加油！**")
 
     try:
         requests.post(f"https://sctapi.ftqq.com/{user.sckey}.send", data={'title': title, 'desp': "\n\n".join(msg_lines)}, timeout=5)
@@ -160,20 +166,17 @@ def run_check_for_user(user, force=False):
     except Exception as e: return False, str(e)
 
 def job_check_all_users():
-    """定时任务入口"""
     logging.info("⏰ 触发定时检查任务...")
     with app.app_context():
         for user in User.query.all(): run_check_for_user(user)
 
 def init_scheduler():
-    """初始化/更新调度器"""
     with app.app_context():
         setting = AppSetting.query.first()
         if not setting:
             setting = AppSetting(push_time="22:00")
             db.session.add(setting)
             db.session.commit()
-        
         t_str = setting.push_time
     
     try:
@@ -243,7 +246,7 @@ def update_settings():
         setting = AppSetting.query.first()
         if not setting: setting = AppSetting(); db.session.add(setting)
         setting.push_time = request.form.get('push_time')
-        init_scheduler() # 立即应用新时间
+        init_scheduler()
     db.session.commit()
     flash('✅ 设置已更新')
     return redirect(url_for('index'))
