@@ -1,10 +1,3 @@
-这是一个更新后的完整 `README.md` 文件。
-
-我根据您的要求，**大幅增强了“免责声明”部分**（增加了关于数据准确性、非购彩平台性质、隐私安全及理性购彩的声明），并增加了**“开源协议”**章节（推荐使用 MIT 协议，因为它最适合此类个人开源项目，免责条款最明确）。
-
-您可以直接覆盖原有的 `README.md` 文件。
-
----
 
 # 🎲 大乐透小助手 (Lottery Bot)
 
@@ -137,3 +130,4 @@ docker run -d \
 *   **Task Queue**: APScheduler (BackgroundScheduler)
 *   **Frontend**: HTML5, Bootstrap 5, CSS3 (3D Neumorphism)
 *   **API**: China Sports Lottery Official Gateway
+
