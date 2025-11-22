@@ -129,8 +129,5 @@ docker run -d \
 *   **Backend**: Python 3.9, Flask
 *   **Database**: SQLite, SQLAlchemy
 *   **Frontend**: HTML5, Bootstrap 5, CSS3 (Neumorphism Design)
-<<<<<<< HEAD
 *   **Deployment**: Docker, Docker Hub
-=======
 *   **Deployment**: Docker, Docker Hub
->>>>>>> da00fdad782a12fe57e49b617dda3700fd479c68
