@@ -1,5 +1,5 @@
 
-# 🎲 大乐透小助手 (Lottery Bot)
+# 🎲 大乐透管家 (Lottery Bot)
 
 [![Python](https://img.shields.io/badge/Python-3.9-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-green.svg)](https://flask.palletsprojects.com/)
@@ -130,4 +130,5 @@ docker run -d \
 *   **Task Queue**: APScheduler (BackgroundScheduler)
 *   **Frontend**: HTML5, Bootstrap 5, CSS3 (3D Neumorphism)
 *   **API**: China Sports Lottery Official Gateway
+
 
