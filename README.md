@@ -107,7 +107,7 @@ docker run -d \
 
 ## ⚠️ 免责声明 (Disclaimer)
 
-在使用本软件（大乐透小助手）之前，请仔细阅读以下条款。使用本软件即表示您同意以下所有条款：
+在使用本软件（大乐透管家）之前，请仔细阅读以下条款。使用本软件即表示您同意以下所有条款：
 
 1.  **非官方应用**：本软件为个人开发者基于兴趣制作的开源项目，**非**中国体育彩票中心官方应用，与官方无任何关联。
 2.  **数据准确性**：
@@ -130,5 +130,6 @@ docker run -d \
 *   **Task Queue**: APScheduler (BackgroundScheduler)
 *   **Frontend**: HTML5, Bootstrap 5, CSS3 (3D Neumorphism)
 *   **API**: China Sports Lottery Official Gateway
+
 
 
