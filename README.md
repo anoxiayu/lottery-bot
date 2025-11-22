@@ -1,9 +1,3 @@
-这是一个更新后的 `README.md`。
-
-我已在 **“部署指南”** 部分新增了 **Docker Hub 快速部署** 的内容，并将原来的手动构建部分标记为进阶选项。现在的文档逻辑更清晰，用户可以直接拉取你的镜像 `anoxiayu/lottery-bot` 使用。
-
----
-
 # 🎲 大乐透小助手 (Lottery Bot)
 
 [![Python](https://img.shields.io/badge/Python-3.9-blue.svg)](https://www.python.org/)
@@ -134,3 +128,4 @@ docker run -d \
 *   **Database**: SQLite, SQLAlchemy
 *   **Frontend**: HTML5, Bootstrap 5, CSS3 (Neumorphism Design)
 *   **Deployment**: Docker, Docker Hub
+
