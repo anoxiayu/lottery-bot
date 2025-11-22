@@ -8,7 +8,7 @@
 [![Docker](https://img.shields.io/badge/Docker-anoxiayu%2Flottery--bot-blue)](https://hub.docker.com/r/anoxiayu/lottery-bot)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-基于 Python Flask 构建的大乐透自动兑奖与推送系统。专为 NAS（威联通/群晖）及 Docker 环境设计，支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
+基于 Python Flask 构建的大乐透中奖情况查询与定时推送系统。专为 NAS及 Docker 环境设计，支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### 1. 命令行部署 (SSH)
 
-适用于威联通、群晖或 Linux 服务器。请确保您已创建好数据存放目录（例如 `/share/Container/lottery_bot/data`）。
+适用于Nas环境（演示环境为威联通）。请确保您已创建好数据存放目录（例如 `/share/Container/lottery_bot/data`）。
 
 ```bash
 # 1. 拉取最新镜像
