@@ -1,6 +1,6 @@
 
 # 🎲 大乐透管家 (Lottery Bot)
->>>>>>> da00fdad782a12fe57e49b617dda3700fd479c68
+
 
 [![Python](https://img.shields.io/badge/Python-3.9-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-green.svg)](https://flask.palletsprojects.com/)
