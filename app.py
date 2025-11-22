@@ -9,7 +9,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# --- 1. 配置日志 (输出到控制台以便 Docker 查看) ---
+# --- 1. 配置日志 ---
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -24,7 +24,7 @@ db_path = os.path.join(os.path.dirname(__file__), 'data')
 if not os.path.exists(db_path):
     os.makedirs(db_path)
 
-# ★★★ 保持文件名不变，确保沿用旧数据 ★★★
+# ★★★ 保持文件名不变，确保直接读取 V7.0/7.1/7.2/7.3 的旧数据 ★★★
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(db_path, "lottery_v7.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -72,7 +72,6 @@ def get_headers():
 def get_latest_lottery():
     url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=1&isVerify=1&pageNo=1"
     try:
-        # 增加超时时间，防止网络波动
         res = requests.get(url, headers=get_headers(), timeout=15).json()
         if res.get('success') and res.get('value', {}).get('list'):
             item = res['value']['list'][0]
@@ -126,33 +125,59 @@ def analyze_ticket(ticket_red, ticket_blue, open_red, open_blue):
     return level, prize, hit_reds, hit_blues
 
 def run_check_for_user(user, force=False):
-    if not user.sckey or not user.tickets: 
-        logging.warning(f"用户 {user.username} 未配置 Key 或无号码，跳过。")
-        return False, "未配置 Key 或无号码"
+    """
+    force=True: 代表用户手动点击“立即推送”
+    force=False: 代表定时任务自动触发
+    """
+    if not user.sckey: 
+        logging.warning(f"用户 {user.username} 未配置 Key，跳过。")
+        return False, "未配置 Key"
+        
+    # 如果没有号码，也就不推了（避免打扰）
+    if not user.tickets:
+        return False, "名下无号码"
 
     result = get_latest_lottery()
     if not result: 
-        logging.error("❌ 无法获取 API 数据，中止任务。")
+        logging.error("❌ 无法获取 API 数据，中止推送。")
         return False, "无法获取API数据"
     
     today_str = datetime.now().strftime("%Y-%m-%d")
+    is_today = (result['date'] == today_str)
     
-    # 调试日志：打印日期对比
-    logging.info(f"📅 日期检查: API返回[{result['date']}] vs 系统今日[{today_str}] (强制模式: {force})")
+    logging.info(f"📅 日期检查: API[{result['date']}] vs 系统[{today_str}] | 模式: {'手动' if force else '定时'}")
 
-    if not force and result['date'] != today_str:
-        logging.warning("⚠️ API 数据滞后，虽然今天是开奖日，但 API 返回的是旧数据。建议将推送时间延后 20 分钟。")
-        return False, "API 数据未更新 (今日无开奖或延迟)"
+    # --- 构建消息内容 ---
+    msg_lines = []
+    
+    # ★★★ V7.4 核心修改：智能滞后提醒 ★★★
+    # 逻辑：如果是定时任务(force=False)，且数据不是今天的，说明时间设早了，API还没更，必须提醒。
+    if not is_today and not force:
+        msg_lines.append("⚠️ **【重要提醒】API数据滞后**")
+        msg_lines.append(f"当前时间已触发推送，但官网接口仍未更新今日({today_str})数据。")
+        msg_lines.append("🔴 **建议：请在网页[系统设置]中，将自动推送时间延后 (例如设为 22:30)。**")
+        msg_lines.append(f"⬇️ 以下为最新可用数据 (第{result['term']}期)：")
+        msg_lines.append("---")
+    elif not is_today and force:
+        # 手动触发，只简单提示
+        msg_lines.append(f"ℹ️ 官网尚未更新今日数据，显示的是最新一期 ({result['date']})。")
+        msg_lines.append("---")
 
-    msg_lines = [f"### 📅 期号: {result['term']}", f"🔴 **{','.join(result['red'])}**  🔵 **{','.join(result['blue'])}**", "---"]
-    total_prize, win_count, active_count = 0, 0, 0
+    msg_lines.append(f"### 📅 开奖期号: {result['term']}")
+    msg_lines.append(f"🔴 **{','.join(result['red'])}**  🔵 **{','.join(result['blue'])}**")
+    msg_lines.append("---")
+    
+    total_prize, win_count = 0, 0
+    # 记录是否至少有一张彩票参与了对比（即在有效期内）
+    has_active_ticket = False 
     
     for t in user.tickets:
+        # 检查彩票是否在有效期内 (针对当前 result 的期号)
         if t.start_term <= result['term'] <= t.end_term:
-            active_count += 1
+            has_active_ticket = True
             lvl, prz, _, _ = analyze_ticket(t.red_nums, t.blue_nums, result['red'], result['blue'])
             
-            # 无论中奖与否都显示
+            # 显示每一注的详情
             if prz > 0:
                 win_count += 1
                 total_prize += prz
@@ -161,13 +186,27 @@ def run_check_for_user(user, force=False):
                 msg_lines.append(f"- {lvl}: {t.note or '自选'}")
             
             msg_lines.append(f"  `{t.red_nums} + {t.blue_nums}`")
+        else:
+            # 如果这张彩票相对于这个开奖结果是“过期”或“未来”的，是否显示？
+            # 为了不让推送太长，这里选择不显示无效票，或者您可以选择简单列出
+            pass
     
-    if active_count == 0 and not force: 
-        return False, "无有效彩票"
+    # 如果所有彩票都过期了，提示一下
+    if not has_active_ticket:
+        msg_lines.append("⚠️ **您的所有号码均不在本期 ({}) 有效范围内**".format(result['term']))
+        msg_lines.append("请登录系统检查“开始期号”和“结束期号”。")
     
-    title = f"大乐透 {result['term']} 结果"
-    if win_count > 0: title = f"🎉 中奖￥{total_prize} - " + title
-    else: msg_lines.append("\n**本期暂未中奖，继续加油！**")
+    # 标题构建
+    title_prefix = ""
+    if not is_today:
+        title_prefix = "[旧数据] "
+    
+    title = f"{title_prefix}大乐透 {result['term']} 结果"
+    
+    if win_count > 0: 
+        title = f"🎉 中奖￥{total_prize} - " + title
+    elif has_active_ticket:
+        msg_lines.append("\n**本期暂未中奖，继续加油！**")
 
     try:
         logging.info(f"🚀 正在向 {user.username} 推送消息...")
@@ -186,12 +225,12 @@ def job_check_all_users():
         if not users:
             logging.warning("⚠️ 数据库中没有用户。")
         for user in users: 
-            run_check_for_user(user)
+            # 即使 force=False，run_check_for_user 内部现在的逻辑也会强制推送并附带警告
+            run_check_for_user(user, force=False)
     logging.info("✅ 定时任务执行完毕。")
 
 def init_scheduler():
     with app.app_context():
-        # 确保数据库表存在
         db.create_all()
         
         setting = AppSetting.query.first()
@@ -342,7 +381,8 @@ def push_history(tid):
     flash('✅ 已推送'); return redirect(url_for('history', tid=tid))
 
 if __name__ == '__main__':
-    # 启动时初始化调度器
-    init_scheduler()
+    with app.app_context():
+        db.create_all()
+        init_scheduler()
     scheduler.start()
     app.run(host='0.0.0.0', port=5000)
