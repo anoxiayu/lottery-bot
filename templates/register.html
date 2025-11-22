@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 大乐透管家</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center" style="height: 100vh;">
+    <div class="card border-0 shadow-lg p-4 rounded-4" style="width: 100%; max-width: 380px;">
+        <div class="text-center mb-4"><h3 class="fw-bold text-success">📝 新用户注册</h3></div>
+        {% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning py-2 small">{{ messages[0] }}</div>{% endif %}{% endwith %}
+        <form method="POST">
+            <div class="mb-3"><input type="text" name="username" class="form-control form-control-lg bg-light border-0" placeholder="设置用户名" required></div>
+            <div class="mb-4"><input type="password" name="password" class="form-control form-control-lg bg-light border-0" placeholder="设置密码" required></div>
+            <button type="submit" class="btn btn-success w-100 btn-lg rounded-pill fw-bold shadow-sm">立即注册</button>
+        </form>
+        <div class="text-center mt-4"><a href="/login" class="text-decoration-none small text-secondary">已有账号？去登录</a></div>
+    </div>
+</body>
+</html>

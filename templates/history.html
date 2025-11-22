@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史查询</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; max-width: 600px; margin: 0 auto; padding-bottom: 30px; }
+        .ball { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; font-size: 12px; color: #eee; background: #ccc; margin-right: 2px;}
+        .hit-r { background: #dc3545; color: #fff; font-weight: bold; }
+        .hit-b { background: #0d6efd; color: #fff; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="/" class="btn btn-sm btn-outline-secondary">← 返回</a>
+        <h6 class="m-0 fw-bold">查询结果</h6>
+        <a href="/push_history/{{ ticket.id }}" class="btn btn-sm btn-success">📲 推送汇总</a>
+    </div>
+    <div class="card shadow-sm mb-3 border-0 rounded-4">
+        <div class="card-body bg-white rounded-4">
+            <div class="d-flex justify-content-between">
+                <span class="fw-bold text-primary">{{ ticket.note or '自选号码' }}</span>
+                <span class="badge bg-dark">累计奖金: ￥{{ total_prize }}</span>
+            </div>
+            <div class="mt-2 text-muted small">
+                号码: <span class="text-danger fw-bold">{{ ticket.red_nums }}</span> + <span class="text-primary fw-bold">{{ ticket.blue_nums }}</span><br>
+                范围: 第 {{ ticket.start_term }} 期 - 第 {{ ticket.end_term }} 期
+            </div>
+        </div>
+    </div>
+    {% if history %}
+        <div class="list-group shadow-sm rounded-4 border-0">
+            {% for item in history %}
+            <div class="list-group-item border-0 border-bottom {{ 'list-group-item-warning' if item.prize > 0 else '' }}">
+                <div class="d-flex w-100 justify-content-between">
+                    <small class="mb-1 fw-bold">第 {{ item.term }} 期 <span class="text-muted fw-normal">({{ item.date }})</span></small>
+                    {% if item.prize > 0 %}<span class="badge bg-danger">{{ item.level }} ￥{{ item.prize }}</span>
+                    {% else %}<span class="badge bg-light text-secondary border">未中奖</span>{% endif %}
+                </div>
+                <div class="mt-1">
+                    {% for n in item.draw_red %}<span class="ball {{ 'hit-r' if n in item.hit_reds else '' }}">{{ n }}</span>{% endfor %}
+                    <span class="mx-1"></span>
+                    {% for n in item.draw_blue %}<span class="ball {{ 'hit-b' if n in item.hit_blues else '' }}">{{ n }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center small rounded-3 border-0 shadow-sm">暂无开奖数据</div>
+    {% endif %}
+</div>
+</body>
+</html>

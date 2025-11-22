@@ -1,0 +1,6 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.2
+requests==2.31.0
+APScheduler==3.10.1
+werkzeug==2.3.7

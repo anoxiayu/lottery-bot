@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大乐透管家</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --red-ball-grad: radial-gradient(circle at 30% 30%, #ff7675, #d63031);
+            --blue-ball-grad: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3);
+            --header-grad: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        body { background-color: var(--bg-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding-bottom: 80px; color: #2d3436; }
+        .main-box { max-width: 600px; margin: 0 auto; }
+        .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .header-card { background: var(--header-grad); border-radius: 20px; padding: 25px 20px; color: white; box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3); position: relative; overflow: hidden; }
+        .header-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%); pointer-events: none; }
+        .term-tag { background: rgba(255, 255, 255, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); }
+        .prize-pool { font-size: 1.4rem; font-weight: 800; background: linear-gradient(to bottom, #ffeaa7, #fab1a0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 10px rgba(0,0,0,0.2); margin-top: 8px; }
+        .ball { display: inline-flex; justify-content: center; align-items: center; width: 34px; height: 34px; border-radius: 50%; font-size: 14px; font-weight: bold; margin: 3px; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 2px 2px rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.2); }
+        .hit-r { background: var(--red-ball-grad); transform: scale(1.1); z-index: 2; }
+        .hit-b { background: var(--blue-ball-grad); transform: scale(1.1); z-index: 2; }
+        .miss { background: #dfe6e9; color: #b2bec3; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); border: none; text-shadow: none; }
+        .content-card { background: white; border-radius: 16px; border: none; box-shadow: 0 8px 24px rgba(149, 157, 165, 0.1); overflow: hidden; margin-bottom: 20px; }
+        .card-header-custom { background: white; padding: 15px 20px; border-bottom: 1px solid #f1f2f6; }
+        .ticket-item { padding: 15px 20px; border-bottom: 1px solid #f5f6fa; position: relative; }
+        .win-bg { background-color: #fffcf0; }
+        .win-bg::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #ff9f43; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+        .expired-item { opacity: 0.6; filter: grayscale(0.9); background: #fafafa; }
+        
+        .input-group-balls { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .input-ball { width: 52px; height: 52px; text-align: center; border-radius: 12px; border: 2px solid #dfe6e9; font-weight: bold; font-size: 20px; background: #fff; transition: all 0.2s; }
+        .input-ball:focus { border-color: #74b9ff; outline: none; box-shadow: 0 0 0 4px rgba(116, 185, 255, 0.2); transform: translateY(-2px); }
+        .input-red { color: #d63031; background: #fff5f5; }
+        .input-red:focus { border-color: #ff7675; box-shadow: 0 0 0 4px rgba(255, 118, 117, 0.2); }
+        .input-blue { color: #0984e3; background: #f0f8ff; }
+        .btn-add-main { background: linear-gradient(to right, #0984e3, #74b9ff); border: none; box-shadow: 0 4px 12px rgba(9, 132, 227, 0.3); }
+        .btn-check-now { background: #ff4757; border: none; color: white; box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3); }
+        .btn-rules { background: #20bf6b; border: none; color: white; box-shadow: 0 4px 10px rgba(32, 191, 107, 0.3); }
+        .badge-custom { font-weight: 500; padding: 5px 10px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar fixed-top">
+    <div class="container main-box d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div style="width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; margin-right: 8px;"></div>
+            <span class="fw-bold text-dark">{{ user.username }}</span>
+        </div>
+        <div>
+            <a href="/rules" class="text-primary text-decoration-none me-3" style="font-size: 0.9rem;"><i class="fas fa-book-open me-1"></i>规则</a>
+            <a href="/logout" class="text-secondary text-decoration-none" style="font-size: 0.9rem;"><i class="fas fa-sign-out-alt"></i> 退出</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container main-box" style="margin-top: 70px;">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div class="alert alert-success shadow-sm border-0 rounded-3 text-center py-2 mb-4" style="font-size: 0.9rem;">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+    
+    <div class="header-card mb-4 text-center">
+        {% if latest %}
+            <input type="hidden" id="latestTerm" value="{{ latest.term }}">
+            <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+                <span class="term-tag">第 {{ latest.term }} 期</span>
+                <span style="font-size: 0.85rem; opacity: 0.8;">{{ latest.date }}</span>
+            </div>
+            <div class="d-flex justify-content-center align-items-center my-3">
+                {% for n in latest.red %} <span class="ball hit-r">{{n}}</span> {% endfor %}
+                <span style="width: 15px"></span>
+                {% for n in latest.blue %} <span class="ball hit-b">{{n}}</span> {% endfor %}
+            </div>
+            <div class="small text-white opacity-75">本期奖池滚存</div>
+            <div class="prize-pool">{{ "{:,.0f}".format(latest.pool|float) }} <span style="font-size: 1rem; color: white;">元</span></div>
+        {% else %}
+            <input type="hidden" id="latestTerm" value="0">
+            <div class="py-4 opacity-75"><div class="spinner-border text-light mb-2" role="status"></div><div>正在同步体彩数据...</div></div>
+        {% endif %}
+    </div>
+
+    <div class="content-card mb-4">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <h6 class="m-0 fw-bold text-dark"><i class="fas fa-ticket-alt text-primary me-2"></i>我的彩票</h6>
+            <button class="btn btn-sm btn-primary btn-add-main rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#addModal">+ 添加</button>
+        </div>
+        <div class="list-content">
+            {% if tickets %}
+                {% for item in tickets %}
+                <div class="ticket-item {{ 'win-bg' if item.status.prize > 0 else '' }} {{ 'expired-item' if item.status.state == 'expired' else '' }}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="fw-bold text-dark">{{ item.ticket.note or '自选号码' }}</span>
+                            <span class="text-muted ms-2" style="font-size: 0.75rem;"><i class="far fa-clock"></i> {{ item.ticket.start_term }} - {{ item.ticket.end_term }}期</span>
+                        </div>
+                        {% if item.status.state == 'expired' %} <span class="badge-custom bg-secondary text-white" style="font-size: 10px;">已过期</span>
+                        {% elif item.status.state == 'future' %} <span class="badge-custom bg-info text-white" style="font-size: 10px;">待开奖</span>
+                        {% elif item.status.prize > 0 %} <span class="badge-custom bg-warning text-dark border border-warning shadow-sm">{{ item.status.level }} <span class="fw-bold text-danger">￥{{ item.status.prize }}</span></span>
+                        {% else %} <span class="badge-custom bg-light text-secondary">未中奖</span> {% endif %}
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center flex-wrap">
+                            {% for n in item.ticket.red_nums.split(',') %} <span class="ball {{ 'hit-r' if n in item.status.hit_reds else 'miss' }}">{{ n }}</span> {% endfor %}
+                            <span class="mx-1"></span>
+                            {% for n in item.ticket.blue_nums.split(',') %} <span class="ball {{ 'hit-b' if n in item.status.hit_blues else 'miss' }}">{{ n }}</span> {% endfor %}
+                        </div>
+                        <div class="d-flex gap-2 ms-2">
+                             <a href="/history/{{ item.ticket.id }}" class="text-primary" title="查询往期"><i class="fas fa-history"></i></a>
+                             <a href="/delete/{{ item.ticket.id }}" class="text-secondary" onclick="return confirm('确认删除此记录？')" title="删除"><i class="fas fa-trash-alt"></i></a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5"><div class="mb-3 text-muted" style="font-size: 3rem;"><i class="fas fa-receipt"></i></div><p class="text-muted small">暂无记录，点击右上角添加您的幸运号码</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="content-card p-3">
+        <div class="d-flex align-items-center mb-3"><h6 class="fw-bold m-0 flex-grow-1"><i class="fas fa-cog text-secondary me-2"></i>系统设置</h6></div>
+        <form action="/update_settings" method="POST">
+            <label class="small text-muted fw-bold mb-1">Server酱 Key</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text bg-light"><i class="fas fa-key text-muted"></i></span>
+                <input type="text" class="form-control" name="sckey" value="" placeholder="{% if user.sckey %}配置已隐藏{% else %}请输入 Key{% endif %}">
+            </div>
+            <label class="small text-muted fw-bold mb-1">自动推送时间 (周一/三/六)</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text bg-light"><i class="far fa-clock text-muted"></i></span>
+                <input type="time" class="form-control" name="push_time" value="{{ push_time }}">
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-dark flex-grow-1">保存设置</button>
+                <a href="/rules" class="btn btn-rules flex-grow-1 fw-bold"><i class="fas fa-book-open me-2"></i>中奖规则</a>
+                <a href="/trigger_self" class="btn btn-check-now flex-grow-1 fw-bold"><i class="fas fa-rocket me-2"></i>立即推送</a>
+            </div>
+        </form>
+    </div>
+    <div class="text-center mt-4 text-muted" style="font-size: 0.75rem; opacity: 0.6;">Lottery Assistant V7.1</div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold ps-2">🎲 添加号码</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body pt-4">
+        <form action="/add" method="POST" id="ballForm">
+            <div class="mb-2 text-muted small fw-bold ps-2">前区 (红球)</div>
+            <div class="input-group-balls">{% for i in range(1,6) %}<input type="tel" class="input-ball input-red jump-input" name="r{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
+            <div class="mb-2 text-muted small fw-bold ps-2">后区 (蓝球)</div>
+            <div class="input-group-balls">{% for i in range(1,3) %}<input type="tel" class="input-ball input-blue jump-input" name="b{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
+            <hr class="my-4 opacity-10">
+            <div class="bg-light p-3 rounded-3 mb-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-4"><label class="small text-muted d-block">开始期号</label><input type="number" class="form-control border-0 shadow-sm" name="start_term" id="startTerm" required style="font-weight: bold;"></div>
+                    <div class="col-4"><label class="small text-muted d-block">连买(期)</label><input type="number" class="form-control border-0 shadow-sm text-center text-primary fw-bold" id="termCount" value="1" min="1" max="30" required></div>
+                    <div class="col-4"><label class="small text-muted d-block">结束期号</label><input type="number" class="form-control border-0 bg-white shadow-sm text-muted" name="end_term" id="endTerm" readonly tabindex="-1"></div>
+                </div>
+            </div>
+            <div class="mb-3"><input type="text" class="form-control py-2 rounded-3" name="note" placeholder="备注 (例如: 老婆生日号)"></div>
+            <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm btn-add-main">确认保存</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputs = document.querySelectorAll('.jump-input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length >= 2) {
+                    let val = parseInt(this.value);
+                    if (this.classList.contains('input-red') && (val < 1 || val > 35)) this.value = ''; 
+                    if (this.classList.contains('input-blue') && (val < 1 || val > 12)) this.value = ''; 
+                    if (this.value.length === 2 && inputs[index + 1]) inputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', function(e) { if (e.key === "Backspace" && this.value.length === 0 && inputs[index - 1]) inputs[index - 1].focus(); });
+            input.addEventListener('focus', function() { this.select(); });
+        });
+        const latestTermStr = document.getElementById('latestTerm').value;
+        const startIn = document.getElementById('startTerm'); const endIn = document.getElementById('endTerm'); const countIn = document.getElementById('termCount');
+        document.getElementById('addModal').addEventListener('show.bs.modal', function () {
+            if (latestTermStr && parseInt(latestTermStr) > 0) startIn.value = parseInt(latestTermStr) + 1;
+            countIn.value = 1; updateEnd();
+        });
+        function updateEnd() { endIn.value = (parseInt(startIn.value) || 0) + (parseInt(countIn.value) || 1) - 1; }
+        startIn.addEventListener('input', updateEnd); countIn.addEventListener('input', updateEnd);
+    });
+</script>
+</body>
+</html>

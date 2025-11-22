@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中奖规则说明</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-color: #f0f2f5; --red-ball-grad: radial-gradient(circle at 30% 30%, #ff7675, #d63031); --blue-ball-grad: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3); }
+        body { background-color: var(--bg-color); font-family: -apple-system, sans-serif; padding-bottom: 40px; }
+        .main-box { max-width: 600px; margin: 0 auto; }
+        .ball { display: inline-flex; justify-content: center; align-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 12px; font-weight: bold; color: white; margin: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 2px 2px rgba(255,255,255,0.4); }
+        .ball-r { background: var(--red-ball-grad); } .ball-b { background: var(--blue-ball-grad); } .ball-hold { background: #dfe6e9; border: 1px dashed #b2bec3; box-shadow: none; }
+        .rule-card { background: white; border-radius: 16px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
+        .rule-header { padding: 12px 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .bg-gold { background: linear-gradient(135deg, #ffeaa7, #fab1a0); color: #d35400; }
+        .bg-silver { background: linear-gradient(135deg, #dfe6e9, #b2bec3); color: #636e72; }
+        .bg-bronze { background: linear-gradient(135deg, #f5e6ca, #eccc68); color: #d35400; }
+        .bg-common { background: #f8f9fa; border-bottom: 1px solid #eee; color: #2d3436; }
+        .rule-body { padding: 15px 20px; } .match-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .plus-sign { margin: 0 8px; color: #b2bec3; font-weight: bold; } .prize-badge { font-size: 0.9rem; font-weight: 800; color: #e17055; }
+    </style>
+</head>
+<body>
+<nav class="navbar fixed-top bg-white shadow-sm">
+    <div class="container main-box">
+        <a href="/" class="text-decoration-none text-dark fw-bold"><i class="fas fa-arrow-left me-2"></i>返回</a>
+        <span class="fw-bold">中奖规则说明</span>
+    </div>
+</nav>
+<div class="container main-box" style="margin-top: 70px;">
+    <div class="rule-card"><div class="rule-header bg-gold"><span><i class="fas fa-trophy me-2"></i>一等奖</span><span>浮动</span></div>
+        <div class="rule-body"><div class="match-row"><div>{% for i in range(5) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div>{% for i in range(2) %}<span class="ball ball-b"></span>{% endfor %}</div><div class="ms-auto fw-bold text-danger">Max 1800万</div></div></div></div>
+    <div class="rule-card"><div class="rule-header bg-silver"><span>二等奖</span><span>浮动</span></div>
+        <div class="rule-body"><div class="match-row"><div>{% for i in range(5) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div><span class="ball ball-b"></span><span class="ball ball-hold"></span></div></div></div></div>
+    <div class="rule-card"><div class="rule-header bg-bronze"><span>三等奖</span><span>10,000 元</span></div>
+        <div class="rule-body"><div class="match-row"><div>{% for i in range(5) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div><span class="ball ball-hold"></span><span class="ball ball-hold"></span></div></div></div></div>
+    <div class="rule-card">
+        <div class="rule-header bg-common"><span>固定奖</span><span class="badge bg-dark">四 ~ 九等</span></div>
+        <div class="rule-body">
+            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><div class="d-flex"><div>{% for i in range(4) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div>{% for i in range(2) %}<span class="ball ball-b"></span>{% endfor %}</div></div><div class="prize-badge">3,000</div></div>
+            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><div class="d-flex"><div>{% for i in range(4) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div><span class="ball ball-b"></span></div></div><div class="prize-badge">300</div></div>
+            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><div class="d-flex"><div>{% for i in range(3) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div>{% for i in range(2) %}<span class="ball ball-b"></span>{% endfor %}</div></div><div class="prize-badge">200</div></div>
+            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><div class="d-flex"><div>{% for i in range(4) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div><span class="ball ball-hold"></span></div></div><div class="prize-badge">100</div></div>
+            <div class="d-flex justify-content-between border-bottom pb-2 mb-2"><div class="d-flex"><div>{% for i in range(3) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div><span class="ball ball-b"></span></div></div><div class="prize-badge">15</div></div>
+            <div class="d-flex justify-content-between"><div class="d-flex"><div>{% for i in range(3) %}<span class="ball ball-r"></span>{% endfor %}</div><div class="plus-sign">+</div><div><span class="ball ball-hold"></span></div></div><div class="prize-badge">5</div></div>
+            <div class="text-end small text-muted mt-1">注: 0+2, 1+2, 2+1 也中5元</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
