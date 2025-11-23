@@ -52,7 +52,10 @@
             <span class="fw-bold text-dark">{{ user.username }}</span>
         </div>
         <div>
-            <a href="/rules" class="text-primary text-decoration-none me-3" style="font-size: 0.9rem;"><i class="fas fa-book-open me-1"></i>规则</a>
+            <!-- ★★★ V7.7 修改：将规则替换为注册人数统计 ★★★ -->
+            <span class="text-secondary me-3" style="font-size: 0.9rem;">
+                <i class="fas fa-users me-1"></i>注册: {{ user_count }}
+            </span>
             <a href="/logout" class="text-secondary text-decoration-none" style="font-size: 0.9rem;"><i class="fas fa-sign-out-alt"></i> 退出</a>
         </div>
     </div>
@@ -127,7 +130,9 @@
             <label class="small text-muted fw-bold mb-1">Server酱 Key</label>
             <div class="input-group mb-3">
                 <span class="input-group-text bg-light"><i class="fas fa-key text-muted"></i></span>
-                <input type="text" class="form-control" name="sckey" value="" placeholder="{% if user.sckey %}配置已隐藏{% else %}请输入 Key{% endif %}">
+                <input type="text" class="form-control" name="sckey" 
+                       value="{% if user.sckey %}{{ user.sckey[:3] }}******{{ user.sckey[-4:] }}{% endif %}" 
+                       placeholder="请输入 Server酱 Key">
             </div>
             <label class="small text-muted fw-bold mb-1">自动推送时间 (周一/三/六)</label>
             <div class="input-group mb-3">
@@ -142,7 +147,7 @@
             </div>
         </form>
     </div>
-    <div class="text-center mt-4 text-muted" style="font-size: 0.75rem; opacity: 0.6;">Lottery Assistant V7.1</div>
+    <div class="text-center mt-4 text-muted" style="font-size: 0.75rem; opacity: 0.6;">Lottery Assistant V7.7</div>
 </div>
 
 <div class="modal fade" id="addModal" tabindex="-1">

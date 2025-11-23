@@ -9,22 +9,13 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# --- 1. 配置日志 ---
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    stream=sys.stdout
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', stream=sys.stdout)
 
 app = Flask(__name__)
 app.secret_key = 'lottery_master_key_final_v7'
 
-# --- 2. 数据库配置 ---
 db_path = os.path.join(os.path.dirname(__file__), 'data')
-if not os.path.exists(db_path):
-    os.makedirs(db_path)
-
-# ★★★ 保持文件名不变，确保直接读取 V7.0/7.1/7.2/7.3 的旧数据 ★★★
+if not os.path.exists(db_path): os.makedirs(db_path)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(db_path, "lottery_v7.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -33,10 +24,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# 全局调度器
 scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
 
-# --- 3. 数据库模型 ---
+# --- 模型 ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -58,16 +48,10 @@ class AppSetting(db.Model):
     push_time = db.Column(db.String(10), default="22:00")
 
 @login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+def load_user(user_id): return User.query.get(int(user_id))
 
-# --- 4. 核心工具函数 ---
-
-def get_headers():
-    return {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://www.lottery.gov.cn/"
-    }
+# --- 工具 ---
+def get_headers(): return {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36", "Referer": "https://www.lottery.gov.cn/"}
 
 def get_latest_lottery():
     url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=1&isVerify=1&pageNo=1"
@@ -76,16 +60,8 @@ def get_latest_lottery():
         if res.get('success') and res.get('value', {}).get('list'):
             item = res['value']['list'][0]
             nums = item['lotteryDrawResult'].split(' ')
-            raw_pool = str(item.get('poolBalanceAfterdraw', '0'))
-            return {
-                'term': int(item['lotteryDrawNum']),
-                'date': item['lotteryDrawTime'],
-                'red': nums[:5],
-                'blue': nums[5:],
-                'pool': raw_pool.replace(',', '')
-            }
-    except Exception as e:
-        logging.error(f"❌ API 请求失败: {e}")
+            return {'term': int(item['lotteryDrawNum']), 'date': item['lotteryDrawTime'], 'red': nums[:5], 'blue': nums[5:], 'pool': str(item.get('poolBalanceAfterdraw', '0')).replace(',', '')}
+    except Exception as e: logging.error(f"API Error: {e}")
     return None
 
 def get_recent_draws(limit=50):
@@ -98,161 +74,90 @@ def get_recent_draws(limit=50):
                 term = int(item['lotteryDrawNum'])
                 nums = item['lotteryDrawResult'].split(' ')
                 draws[term] = {'term': term, 'date': item['lotteryDrawTime'], 'red': nums[:5], 'blue': nums[5:]}
-    except Exception: pass
+    except: pass
     return draws
 
 def analyze_ticket(ticket_red, ticket_blue, open_red, open_blue):
     if not open_red: return "等待开奖", 0, [], []
     u_r, u_b = set(ticket_red.split(',')), set(ticket_blue.split(','))
     o_r, o_b = set(open_red), set(open_blue)
-    hit_reds, hit_blues = list(u_r & o_r), list(u_b & o_b)
-    r_cnt, b_cnt = len(hit_reds), len(hit_blues)
-    
-    level, prize = "未中奖", 0
-    if r_cnt == 5 and b_cnt == 2: level, prize = "一等奖", 10000000
-    elif r_cnt == 5 and b_cnt == 1: level, prize = "二等奖", 100000
-    elif r_cnt == 5 and b_cnt == 0: level, prize = "三等奖", 10000
-    elif r_cnt == 4 and b_cnt == 2: level, prize = "四等奖", 3000
-    elif r_cnt == 4 and b_cnt == 1: level, prize = "五等奖", 300
-    elif r_cnt == 3 and b_cnt == 2: level, prize = "六等奖", 200
-    elif r_cnt == 4 and b_cnt == 0: level, prize = "七等奖", 100
-    elif r_cnt == 3 and b_cnt == 1: level, prize = "八等奖", 15
-    elif r_cnt == 2 and b_cnt == 2: level, prize = "八等奖", 15
-    elif r_cnt == 3 and b_cnt == 0: level, prize = "九等奖", 5
-    elif r_cnt == 1 and b_cnt == 2: level, prize = "九等奖", 5
-    elif r_cnt == 2 and b_cnt == 1: level, prize = "九等奖", 5
-    elif r_cnt == 0 and b_cnt == 2: level, prize = "九等奖", 5
-    return level, prize, hit_reds, hit_blues
+    r_cnt, b_cnt = len(u_r & o_r), len(u_b & o_b)
+    if r_cnt == 5 and b_cnt == 2: return "一等奖", 10000000, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 5 and b_cnt == 1: return "二等奖", 100000, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 5 and b_cnt == 0: return "三等奖", 10000, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 4 and b_cnt == 2: return "四等奖", 3000, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 4 and b_cnt == 1: return "五等奖", 300, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 3 and b_cnt == 2: return "六等奖", 200, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 4 and b_cnt == 0: return "七等奖", 100, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 3 and b_cnt == 1: return "八等奖", 15, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 2 and b_cnt == 2: return "八等奖", 15, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 3 and b_cnt == 0: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 1 and b_cnt == 2: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 2 and b_cnt == 1: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
+    if r_cnt == 0 and b_cnt == 2: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
+    return "未中奖", 0, list(u_r & o_r), list(u_b & o_b)
 
 def run_check_for_user(user, force=False):
-    """
-    force=True: 代表用户手动点击“立即推送”
-    force=False: 代表定时任务自动触发
-    """
-    if not user.sckey: 
-        logging.warning(f"用户 {user.username} 未配置 Key，跳过。")
-        return False, "未配置 Key"
-        
-    # 如果没有号码，也就不推了（避免打扰）
-    if not user.tickets:
-        return False, "名下无号码"
-
+    if not user.sckey: return False, "未配置 Key"
+    if not user.tickets: return False, "名下无号码"
     result = get_latest_lottery()
-    if not result: 
-        logging.error("❌ 无法获取 API 数据，中止推送。")
-        return False, "无法获取API数据"
+    if not result: return False, "无法获取API数据"
     
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    is_today = (result['date'] == today_str)
-    
-    logging.info(f"📅 日期检查: API[{result['date']}] vs 系统[{today_str}] | 模式: {'手动' if force else '定时'}")
-
-    # --- 构建消息内容 ---
+    is_today = (result['date'] == datetime.now().strftime("%Y-%m-%d"))
     msg_lines = []
     
-    # ★★★ V7.4 核心修改：智能滞后提醒 ★★★
-    # 逻辑：如果是定时任务(force=False)，且数据不是今天的，说明时间设早了，API还没更，必须提醒。
     if not is_today and not force:
-        msg_lines.append("⚠️ **【重要提醒】API数据滞后**")
-        msg_lines.append(f"当前时间已触发推送，但官网接口仍未更新今日({today_str})数据。")
-        msg_lines.append("🔴 **建议：请在网页[系统设置]中，将自动推送时间延后 (例如设为 22:30)。**")
-        msg_lines.append(f"⬇️ 以下为最新可用数据 (第{result['term']}期)：")
+        msg_lines.append("⚠️ **【提醒】API数据滞后**\n当前已触发推送，但官网未更新今日数据。\n建议在系统设置中延后推送时间。")
         msg_lines.append("---")
     elif not is_today and force:
-        # 手动触发，只简单提示
-        msg_lines.append(f"ℹ️ 官网尚未更新今日数据，显示的是最新一期 ({result['date']})。")
+        msg_lines.append(f"ℹ️ 官网尚未更新今日数据，显示最新一期 ({result['date']})。")
         msg_lines.append("---")
 
-    msg_lines.append(f"### 📅 开奖期号: {result['term']}")
+    msg_lines.append(f"### 📅 期号: {result['term']}")
     msg_lines.append(f"🔴 **{','.join(result['red'])}**  🔵 **{','.join(result['blue'])}**")
     msg_lines.append("---")
     
-    total_prize, win_count = 0, 0
-    # 记录是否至少有一张彩票参与了对比（即在有效期内）
-    has_active_ticket = False 
-    
+    total_prize, win_count, has_active = 0, 0, False
     for t in user.tickets:
-        # 检查彩票是否在有效期内 (针对当前 result 的期号)
         if t.start_term <= result['term'] <= t.end_term:
-            has_active_ticket = True
+            has_active = True
             lvl, prz, _, _ = analyze_ticket(t.red_nums, t.blue_nums, result['red'], result['blue'])
-            
-            # 显示每一注的详情
-            if prz > 0:
-                win_count += 1
-                total_prize += prz
-                msg_lines.append(f"- 🎁 **{lvl} (￥{prz})**: {t.note or '自选'}")
-            else:
-                msg_lines.append(f"- {lvl}: {t.note or '自选'}")
-            
+            prefix = "🎁 **" if prz > 0 else ""
+            suffix = "**" if prz > 0 else ""
+            msg_lines.append(f"- {prefix}{lvl} (￥{prz}){suffix}: {t.note or '自选'}")
+            if prz > 0: win_count += 1; total_prize += prz
             msg_lines.append(f"  `{t.red_nums} + {t.blue_nums}`")
-        else:
-            # 如果这张彩票相对于这个开奖结果是“过期”或“未来”的，是否显示？
-            # 为了不让推送太长，这里选择不显示无效票，或者您可以选择简单列出
-            pass
+            
+    if not has_active: msg_lines.append("⚠️ 所有号码均不在本期有效范围内")
     
-    # 如果所有彩票都过期了，提示一下
-    if not has_active_ticket:
-        msg_lines.append("⚠️ **您的所有号码均不在本期 ({}) 有效范围内**".format(result['term']))
-        msg_lines.append("请登录系统检查“开始期号”和“结束期号”。")
-    
-    # 标题构建
-    title_prefix = ""
-    if not is_today:
-        title_prefix = "[旧数据] "
-    
-    title = f"{title_prefix}大乐透 {result['term']} 结果"
-    
-    if win_count > 0: 
-        title = f"🎉 中奖￥{total_prize} - " + title
-    elif has_active_ticket:
-        msg_lines.append("\n**本期暂未中奖，继续加油！**")
+    title = f"{'[旧数据] ' if not is_today else ''}大乐透 {result['term']} 结果"
+    if win_count > 0: title = f"🎉 中奖￥{total_prize} - " + title
+    elif has_active: msg_lines.append("\n**本期暂未中奖，继续加油！**")
 
     try:
-        logging.info(f"🚀 正在向 {user.username} 推送消息...")
         requests.post(f"https://sctapi.ftqq.com/{user.sckey}.send", data={'title': title, 'desp': "\n\n".join(msg_lines)}, timeout=10)
-        logging.info(f"✅ 推送成功！")
         return True, "推送成功"
-    except Exception as e: 
-        logging.error(f"❌ 推送失败: {e}")
-        return False, str(e)
+    except Exception as e: return False, str(e)
 
 def job_check_all_users():
-    """定时任务入口"""
-    logging.info("⏰ 定时器触发：开始执行全员检查任务...")
+    logging.info("⏰ 定时任务触发...")
     with app.app_context():
-        users = User.query.all()
-        if not users:
-            logging.warning("⚠️ 数据库中没有用户。")
-        for user in users: 
-            # 即使 force=False，run_check_for_user 内部现在的逻辑也会强制推送并附带警告
-            run_check_for_user(user, force=False)
-    logging.info("✅ 定时任务执行完毕。")
+        for user in User.query.all(): run_check_for_user(user, force=False)
 
 def init_scheduler():
     with app.app_context():
         db.create_all()
-        
         setting = AppSetting.query.first()
-        if not setting:
-            setting = AppSetting(push_time="22:00")
-            db.session.add(setting)
-            db.session.commit()
+        if not setting: setting = AppSetting(push_time="22:00"); db.session.add(setting); db.session.commit()
         t_str = setting.push_time
-    
     try:
-        hour, minute = t_str.split(':')
-        if scheduler.get_job('auto_push'):
-            scheduler.reschedule_job('auto_push', trigger='cron', day_of_week='mon,wed,sat', hour=hour, minute=minute)
-        else:
-            scheduler.add_job(job_check_all_users, 'cron', day_of_week='mon,wed,sat', hour=hour, minute=minute, id='auto_push')
-        logging.info(f"📅 调度器初始化成功: 将在周一、三、六的 {t_str} 运行")
-        logging.info(f"ℹ️ 当前系统时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (请确认是否为北京时间)")
-    except Exception as e:
-        logging.error(f"❌ 调度器设置失败: {e}")
+        h, m = t_str.split(':')
+        if scheduler.get_job('auto_push'): scheduler.reschedule_job('auto_push', trigger='cron', day_of_week='mon,wed,sat', hour=h, minute=m)
+        else: scheduler.add_job(job_check_all_users, 'cron', day_of_week='mon,wed,sat', hour=h, minute=m, id='auto_push')
+        logging.info(f"📅 调度器已设定: 周一三六 {t_str}")
+    except Exception as e: logging.error(f"调度器错误: {e}")
 
-# --- 5. Web 路由 (保持不变) ---
-
+# --- 路由 ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -260,7 +165,7 @@ def login():
         if user and check_password_hash(user.password_hash, request.form.get('password')):
             login_user(user)
             return redirect(url_for('index'))
-        flash('❌ 用户名或密码错误')
+        flash('❌ 错误')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -270,7 +175,6 @@ def register():
         else:
             db.session.add(User(username=request.form.get('username'), password_hash=generate_password_hash(request.form.get('password'))))
             db.session.commit()
-            flash('✅ 注册成功')
             return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -283,34 +187,41 @@ def logout(): logout_user(); return redirect(url_for('login'))
 def index():
     setting = AppSetting.query.first()
     push_time = setting.push_time if setting else "22:00"
-
     latest = get_latest_lottery()
     curr_term = latest['term'] if latest else 0
     
-    display_data = []
+    # ★★★ V7.7 核心修改：获取注册总人数 ★★★
+    user_count = User.query.count()
+
+    data = []
     for t in current_user.tickets:
-        status = {'level': 'waiting', 'prize': 0, 'state': 'unknown'}
+        st = {'level': 'waiting', 'prize': 0, 'state': 'unknown'}
         if latest:
-            if curr_term > t.end_term: status['state'] = 'expired'
-            elif curr_term < t.start_term: status['state'] = 'future'
+            if curr_term > t.end_term: st['state'] = 'expired'
+            elif curr_term < t.start_term: st['state'] = 'future'
             else:
                 lvl, prz, hr, hb = analyze_ticket(t.red_nums, t.blue_nums, latest['red'], latest['blue'])
-                status = {'level': lvl, 'prize': prz, 'hit_reds': hr, 'hit_blues': hb, 'state': 'active'}
-        display_data.append({'ticket': t, 'status': status})
+                st = {'level': lvl, 'prize': prz, 'hit_reds': hr, 'hit_blues': hb, 'state': 'active'}
+        data.append({'ticket': t, 'status': st})
     
-    return render_template('index.html', latest=latest, tickets=display_data, user=current_user, push_time=push_time)
+    # 将 user_count 传给前端
+    return render_template('index.html', latest=latest, tickets=data, user=current_user, push_time=push_time, user_count=user_count)
 
 @app.route('/update_settings', methods=['POST'])
 @login_required
 def update_settings():
-    if 'sckey' in request.form: current_user.sckey = request.form.get('sckey')
+    new_key = request.form.get('sckey')
+    if new_key and new_key.strip() and '******' not in new_key:
+        current_user.sckey = new_key.strip()
+    
     if 'push_time' in request.form:
         setting = AppSetting.query.first()
         if not setting: setting = AppSetting(); db.session.add(setting)
         setting.push_time = request.form.get('push_time')
         init_scheduler()
+        
     db.session.commit()
-    flash('✅ 设置已更新')
+    flash('✅ 设置已保存')
     return redirect(url_for('index'))
 
 @app.route('/add', methods=['POST'])
@@ -319,14 +230,9 @@ def add_ticket():
     try:
         reds = ",".join([request.form.get(f'r{i}').strip().zfill(2) for i in range(1, 6)])
         blues = ",".join([request.form.get(f'b{i}').strip().zfill(2) for i in range(1, 3)])
-        db.session.add(MyTicket(
-            user_id=current_user.id, red_nums=reds, blue_nums=blues, 
-            note=request.form.get('note'), 
-            start_term=int(request.form.get('start_term')), 
-            end_term=int(request.form.get('end_term'))
-        ))
+        db.session.add(MyTicket(user_id=current_user.id, red_nums=reds, blue_nums=blues, note=request.form.get('note'), start_term=int(request.form.get('start_term')), end_term=int(request.form.get('end_term'))))
         db.session.commit()
-    except: flash('❌ 添加失败，请检查输入')
+    except: flash('❌ 添加失败')
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:tid>')
@@ -345,8 +251,7 @@ def trigger_self():
 
 @app.route('/rules')
 @login_required
-def rules():
-    return render_template('rules.html', user=current_user)
+def rules(): return render_template('rules.html', user=current_user)
 
 @app.route('/history/<int:tid>')
 @login_required
@@ -357,8 +262,7 @@ def history(tid):
     hist, total = [], 0
     for term in range(t.start_term, t.end_term + 1):
         if term in draws:
-            d = draws[term]
-            l, p, hr, hb = analyze_ticket(t.red_nums, t.blue_nums, d['red'], d['blue'])
+            d = draws[term]; l, p, hr, hb = analyze_ticket(t.red_nums, t.blue_nums, d['red'], d['blue'])
             total += p
             hist.append({'term': term, 'date': d['date'], 'draw_red': d['red'], 'draw_blue': d['blue'], 'level': l, 'prize': p, 'hit_reds': hr, 'hit_blues': hb})
     hist.sort(key=lambda x: x['term'], reverse=True)
@@ -367,9 +271,8 @@ def history(tid):
 @app.route('/push_history/<int:tid>')
 @login_required
 def push_history(tid):
-    if not current_user.sckey: flash('❌ 请先配置 Key'); return redirect(url_for('history', tid=tid))
-    t = MyTicket.query.get_or_404(tid)
-    draws = get_recent_draws()
+    if not current_user.sckey: flash('❌ 无Key'); return redirect(url_for('history', tid=tid))
+    t = MyTicket.query.get_or_404(tid); draws = get_recent_draws()
     lines, total, wins, checked = [], 0, 0, 0
     for term in range(t.start_term, t.end_term + 1):
         if term in draws:
