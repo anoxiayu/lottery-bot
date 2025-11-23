@@ -8,11 +8,11 @@
 [![Docker Image](https://img.shields.io/badge/Docker%20Pull-anoxiayu%2Flottery--bot-blue.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-> **专为 NAS 打造的自动化彩票助手**
+> **专为 NAS 打造的自动化彩票管家**
 >
 > 📦 **Docker Hub 官方镜像:** [**anoxiayu/lottery-bot**](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
 
-基于 Python Flask 构建的大乐透自动兑奖与推送系统。专为威联通 (QNAP)、群晖 (Synology) 及 Docker 环境设计。支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
+基于 Python Flask 构建的大乐透中奖情况查询与定时推送服务。专为威联通 (QNAP)、群晖 (Synology) 及 Docker 环境设计。支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
 
 ---
 
