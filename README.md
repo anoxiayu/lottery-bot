@@ -1,43 +1,47 @@
 
 ---
 
-# 🎲 大乐透管家(Lottery Bot)
+# 🎲 大乐透小助手 (Lottery Bot)
 
-[![Python](https://img.shields.io/badge/Python-3.9-blue.svg)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.3-green.svg)](https://flask.palletsprojects.com/)
-[![Docker](https://img.shields.io/badge/Docker-anoxiayu%2Flottery--bot-blue)](https://hub.docker.com/r/anoxiayu/lottery-bot)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.9-blue.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.3-green.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Docker Image](https://img.shields.io/badge/Docker%20Pull-anoxiayu%2Flottery--bot-blue.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-基于 Python Flask 构建的大乐透中奖情况查询与定时推送系统。专为 NAS及 Docker 环境设计，支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
+> **专为 NAS 打造的自动化彩票助手**
+>
+> 📦 **Docker Hub 官方镜像:** [**anoxiayu/lottery-bot**](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
 
----
-
-## ✨ 主要功能
-## 有效解决一个或多个号码连买多期不想每次扫码查询中奖结果的痛点
-*   **📊 自动兑奖**：自动同步官方开奖数据，计算中奖等级与金额。
-*   **🎫 多期管理**：支持设置“开始期号”与“连买期数”，自动计算有效期。
-*   **📲 微信推送**：集成 [Server酱](https://sct.ftqq.com/)，开奖日自动推送到微信（仅在有效期内且中奖/开奖时推送）。
-*   **🕒 自定义任务**：支持在网页端自定义每日自动检查的时间（默认周一/三/六 22:00）。
-*   **📜 历史回溯**：支持查询某注号码在过去 50 期内的中奖情况，并生成汇总报告推送。
-*   **👀 可视化规则**：内置大乐透中奖规则图解，直观易懂。
-*   **🔐 多用户隔离**：支持多用户注册登录，数据与推送 Key 相互隔离。
-*   **🎨 精美 UI**：采用 3D 拟态风格圆球设计，移动端完美适配。
+基于 Python Flask 构建的大乐透自动兑奖与推送系统。专为威联通 (QNAP)、群晖 (Synology) 及 Docker 环境设计。支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
 
 ---
 
-## 🐳 Docker 快速部署 (推荐)
+## ✨ 核心亮点
 
-本镜像已发布至 Docker Hub，无需下载源码，直接拉取即可运行。
+*   **📊 全自动兑奖**：每日定时同步官方开奖数据，自动计算中奖等级与金额（支持所有奖级）。
+*   **🎫 多期智能管理**：支持设置“开始期号”与“连买期数”（1-30期），系统自动计算有效期，过期自动归档。
+*   **📲 隐私推送**：集成 [Server酱](https://sct.ftqq.com/)，支持 Key 前端打码显示。仅在开奖日且在有效期内推送，拒绝垃圾信息。
+*   **🕒 自定义计划**：支持在网页端直接修改每日自动检查的时间（默认 22:00），无需重启容器。
+*   **📜 历史回溯报告**：一键生成某注号码在过去 50 期内的中奖情况汇总，并推送到微信。
+*   **🎨 拟态 UI 设计**：采用精美的 3D 拟态风格圆球设计，完美适配手机端操作。
+*   **🔐 数据安全**：支持多用户隔离，支持 Docker 挂载持久化存储，重启不丢失数据。
 
-### 1. 命令行部署 (SSH)
+---
 
-适用于Nas环境（演示环境为威联通）。请确保您已创建好数据存放目录（例如 `/share/Container/lottery_bot/data`）。
+## 🚀 快速部署 (Docker)
+
+无需下载源码，直接拉取镜像即可运行。
+
+### 1. 准备工作
+在您的 NAS 或服务器上创建一个用于存放数据的文件夹，例如：`/share/Container/lottery_bot/data`。
+
+### 2. 启动容器 (命令行/SSH)
 
 ```bash
 # 1. 拉取最新镜像
 docker pull anoxiayu/lottery-bot:latest
 
-# 2. 运行容器 (请根据实际情况修改 -v 挂载路径)
+# 2. 启动容器 (请务必修改 -v 挂载路径为您的实际路径)
 docker run -d \
   --name lotto-web \
   -p 5000:5000 \
@@ -46,68 +50,61 @@ docker run -d \
   anoxiayu/lottery-bot:latest
 ```
 
-*   **`-p 5000:5000`**: 访问端口为 5000。
-*   **`-v ...:/app/data`**: **[重要]** 数据持久化目录。必须挂载，否则重启后账号数据会丢失。
-*   **`--restart unless-stopped`**: 开机自启。
+*   **`-p 5000:5000`**: 访问端口。
+*   **`-v ...:/app/data`**: **[⚠️重要]** 数据持久化目录。如果不挂载，重启后账号和彩票数据将**丢失**。
+*   **`--restart unless-stopped`**: 保证 NAS 重启后服务自动启动。
 
-### 2. 威联通 Container Station 部署
+### 3. 威联通 Container Station 部署
 
 1.  打开 **Container Station**。
 2.  点击 **Images (镜像)** -> **Pull (拉取)**。
-3.  搜索/输入镜像名：`anoxiayu/lottery-bot`，版本选择 `latest`。
+3.  输入镜像名称：`anoxiayu/lottery-bot`，版本：`latest`。
 4.  拉取完成后点击 **Create (创建)**。
-5.  在 **Advanced Settings (高级设置)** 中：
-    *   **Network**: 端口映射 `5000` (主机) -> `5000` (容器)。
-    *   **Shared Folders**: 挂载本机文件夹到 `/app/data`。
+5.  **Advanced Settings (高级设置)**：
+    *   **Network**: Host Port `5000` -> Container Port `5000`。
+    *   **Shared Folders**: 新增挂载，将本机文件夹映射到容器内的 `/app/data`。
 
 ---
 
-## 🛠️ 手动构建 (可选)
+## 📖 使用指南
 
-如果您需要修改源码或进行二次开发，可以手动构建。
-
-1.  **下载源码**：
-    ```text
-    lottery_bot/
-    ├── Dockerfile
-    ├── requirements.txt
-    ├── app.py
-    └── templates/
-    ```
-2.  **构建镜像**：
-    ```bash
-    cd lottery_bot
-    docker build -t my-lotto-local .
-    ```
-3.  **运行**：
-    ```bash
-    docker run -d -p 5000:5000 -v $(pwd)/data:/app/data my-lotto-local
-    ```
-
----
-
-## 📖 使用说明
-
-1.  **访问**：打开浏览器访问 `http://<NAS_IP>:5000`。
-2.  **注册**：首次使用请点击“去注册”创建一个账号。
+1.  **访问**：浏览器打开 `http://<NAS_IP>:5000`。
+2.  **注册**：首次使用请点击“去注册”创建账号。
 3.  **配置**：
-    *   登录后，在主页底部填入 **Server酱 SendKey**。
-    *   设置自动推送时间（建议 `21:40` 或 `22:00`）。
+    *   登录后，在主页底部的“系统设置”卡片中填入 **Server酱 SendKey**。
+    *   设置自动推送时间（建议设置为 `21:40` 或 `22:00`，以防官方接口延迟）。
+    *   点击“保存”，Key 会自动打码保护。
 4.  **添加号码**：
-    *   点击 **`+ 添加`**，输入号码。
-    *   **连买期数**默认为1，最大30期，系统自动计算有效期。
+    *   点击 **`+ 添加`**，输入前区/后区号码。
+    *   **连买期数**：默认为1，支持修改，系统会自动计算结束期号。
 5.  **状态说明**：
-    *   🟦 **待开奖**：期号未到。
-    *   🟨 **已中奖**：中奖显示金额。
-    *   ⬜ **已过期**：期号已过。
+    *   🟦 **待开奖**：当前期号未达到开始期号。
+    *   🟨 **已中奖**：显示中奖等级及金额。
+    *   ⬜ **已过期**：当前期号超过结束期号。
+
+---
+
+## 🛠️ 手动构建 (开发者)
+
+如果您需要修改源码进行二次开发：
+
+```bash
+# 1. 下载源码
+git clone <your-repo-url>
+cd lottery-bot
+
+# 2. 构建镜像
+docker build -t my-lotto-local .
+
+# 3. 运行
+docker run -d -p 5000:5000 -v $(pwd)/data:/app/data my-lotto-local
+```
 
 ---
 
 ## ⚖️ 开源协议 (License)
 
-本项目采用 **MIT 许可证** 开源。
-
-这意味着您可以自由地使用、复制、修改、合并、出版发行、散布、再授权及贩售本软件的副本，但您必须在您的衍生作品中保留本项目的版权声明和许可声明。
+本项目采用 **MIT 许可证** 开源。您可以自由地使用、修改和分发，但需保留版权声明。
 
 [查看完整的 MIT 许可证文件](https://opensource.org/licenses/MIT)
 
@@ -125,9 +122,6 @@ docker run -d \
 
 ---
 
-## 🛠️ 技术栈
-
-*   **Backend**: Python 3.9, Flask
-*   **Database**: SQLite, SQLAlchemy
-*   **Frontend**: HTML5, Bootstrap 5, CSS3 (Neumorphism Design)
-*   **Deployment**: Docker, Docker Hub
+<div align="center">
+    <small>Powered by Flask & Docker | Made by Anoxiayu</small>
+</div>
