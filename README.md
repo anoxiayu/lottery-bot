@@ -1,7 +1,7 @@
 
 ---
 
-# 🎲 大乐透小助手 (Lottery Bot)
+# 🎲 大乐透管家 (Lottery Bot)
 
 [![Python](https://img.shields.io/badge/Python-3.9-blue.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-green.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
