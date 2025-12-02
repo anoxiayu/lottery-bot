@@ -81,21 +81,25 @@ def analyze_ticket(ticket_red, ticket_blue, open_red, open_blue):
     if not open_red: return "等待开奖", 0, [], []
     u_r, u_b = set(ticket_red.split(',')), set(ticket_blue.split(','))
     o_r, o_b = set(open_red), set(open_blue)
-    r_cnt, b_cnt = len(u_r & o_r), len(u_b & o_b)
-    if r_cnt == 5 and b_cnt == 2: return "一等奖", 10000000, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 5 and b_cnt == 1: return "二等奖", 100000, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 5 and b_cnt == 0: return "三等奖", 10000, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 4 and b_cnt == 2: return "四等奖", 3000, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 4 and b_cnt == 1: return "五等奖", 300, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 3 and b_cnt == 2: return "六等奖", 200, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 4 and b_cnt == 0: return "七等奖", 100, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 3 and b_cnt == 1: return "八等奖", 15, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 2 and b_cnt == 2: return "八等奖", 15, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 3 and b_cnt == 0: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 1 and b_cnt == 2: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 2 and b_cnt == 1: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
-    if r_cnt == 0 and b_cnt == 2: return "九等奖", 5, list(u_r & o_r), list(u_b & o_b)
-    return "未中奖", 0, list(u_r & o_r), list(u_b & o_b)
+    # 将集合转为列表并排序，方便后续展示
+    hit_reds = sorted(list(u_r & o_r))
+    hit_blues = sorted(list(u_b & o_b))
+    r_cnt, b_cnt = len(hit_reds), len(hit_blues)
+    
+    if r_cnt == 5 and b_cnt == 2: return "一等奖", 10000000, hit_reds, hit_blues
+    if r_cnt == 5 and b_cnt == 1: return "二等奖", 100000, hit_reds, hit_blues
+    if r_cnt == 5 and b_cnt == 0: return "三等奖", 10000, hit_reds, hit_blues
+    if r_cnt == 4 and b_cnt == 2: return "四等奖", 3000, hit_reds, hit_blues
+    if r_cnt == 4 and b_cnt == 1: return "五等奖", 300, hit_reds, hit_blues
+    if r_cnt == 3 and b_cnt == 2: return "六等奖", 200, hit_reds, hit_blues
+    if r_cnt == 4 and b_cnt == 0: return "七等奖", 100, hit_reds, hit_blues
+    if r_cnt == 3 and b_cnt == 1: return "八等奖", 15, hit_reds, hit_blues
+    if r_cnt == 2 and b_cnt == 2: return "八等奖", 15, hit_reds, hit_blues
+    if r_cnt == 3 and b_cnt == 0: return "九等奖", 5, hit_reds, hit_blues
+    if r_cnt == 1 and b_cnt == 2: return "九等奖", 5, hit_reds, hit_blues
+    if r_cnt == 2 and b_cnt == 1: return "九等奖", 5, hit_reds, hit_blues
+    if r_cnt == 0 and b_cnt == 2: return "九等奖", 5, hit_reds, hit_blues
+    return "未中奖", 0, hit_reds, hit_blues
 
 def run_check_for_user(user, force=False):
     if not user.sckey: return False, "未配置 Key"
@@ -107,10 +111,10 @@ def run_check_for_user(user, force=False):
     msg_lines = []
     
     if not is_today and not force:
-        msg_lines.append("⚠️ **【提醒】API数据滞后**\n当前已触发推送，但官网未更新今日数据。\n建议在系统设置中延后推送时间。")
+        msg_lines.append("⚠️ **【提醒】API数据滞后**\n官网未更新今日数据，建议延后推送时间。")
         msg_lines.append("---")
     elif not is_today and force:
-        msg_lines.append(f"ℹ️ 官网尚未更新今日数据，显示最新一期 ({result['date']})。")
+        msg_lines.append(f"ℹ️ 官网未更新，显示最新一期 ({result['date']})。")
         msg_lines.append("---")
 
     msg_lines.append(f"### 📅 期号: {result['term']}")
@@ -121,12 +125,31 @@ def run_check_for_user(user, force=False):
     for t in user.tickets:
         if t.start_term <= result['term'] <= t.end_term:
             has_active = True
-            lvl, prz, _, _ = analyze_ticket(t.red_nums, t.blue_nums, result['red'], result['blue'])
+            lvl, prz, hr, hb = analyze_ticket(t.red_nums, t.blue_nums, result['red'], result['blue'])
+            
+            # --- V7.8 新增：详细命中信息构建 ---
+            # 格式：前区买中了X个号码，分别是：A、B，后区...
+            if hr:
+                hr_info = f"前区中了{len(hr)}个，分别是：{'、'.join(hr)}"
+            else:
+                hr_info = "前区未中号码"
+            
+            if hb:
+                hb_info = f"后区中了{len(hb)}个，分别是：{'、'.join(hb)}"
+            else:
+                hb_info = "后区未中号码"
+                
+            hit_detail_str = f"{hr_info}；{hb_info}。"
+            # --------------------------------
+
             prefix = "🎁 **" if prz > 0 else ""
             suffix = "**" if prz > 0 else ""
+            
             msg_lines.append(f"- {prefix}{lvl} (￥{prz}){suffix}: {t.note or '自选'}")
-            if prz > 0: win_count += 1; total_prize += prz
             msg_lines.append(f"  `{t.red_nums} + {t.blue_nums}`")
+            msg_lines.append(f"  📝 {hit_detail_str}") # 添加命中详情行
+            
+            if prz > 0: win_count += 1; total_prize += prz
             
     if not has_active: msg_lines.append("⚠️ 所有号码均不在本期有效范围内")
     
@@ -189,10 +212,7 @@ def index():
     push_time = setting.push_time if setting else "22:00"
     latest = get_latest_lottery()
     curr_term = latest['term'] if latest else 0
-    
-    # ★★★ V7.7 核心修改：获取注册总人数 ★★★
     user_count = User.query.count()
-
     data = []
     for t in current_user.tickets:
         st = {'level': 'waiting', 'prize': 0, 'state': 'unknown'}
@@ -203,8 +223,6 @@ def index():
                 lvl, prz, hr, hb = analyze_ticket(t.red_nums, t.blue_nums, latest['red'], latest['blue'])
                 st = {'level': lvl, 'prize': prz, 'hit_reds': hr, 'hit_blues': hb, 'state': 'active'}
         data.append({'ticket': t, 'status': st})
-    
-    # 将 user_count 传给前端
     return render_template('index.html', latest=latest, tickets=data, user=current_user, push_time=push_time, user_count=user_count)
 
 @app.route('/update_settings', methods=['POST'])
@@ -213,13 +231,11 @@ def update_settings():
     new_key = request.form.get('sckey')
     if new_key and new_key.strip() and '******' not in new_key:
         current_user.sckey = new_key.strip()
-    
     if 'push_time' in request.form:
         setting = AppSetting.query.first()
         if not setting: setting = AppSetting(); db.session.add(setting)
         setting.push_time = request.form.get('push_time')
         init_scheduler()
-        
     db.session.commit()
     flash('✅ 设置已保存')
     return redirect(url_for('index'))

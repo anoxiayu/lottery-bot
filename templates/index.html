@@ -52,10 +52,7 @@
             <span class="fw-bold text-dark">{{ user.username }}</span>
         </div>
         <div>
-            <!-- ★★★ V7.7 修改：将规则替换为注册人数统计 ★★★ -->
-            <span class="text-secondary me-3" style="font-size: 0.9rem;">
-                <i class="fas fa-users me-1"></i>注册: {{ user_count }}
-            </span>
+            <span class="text-secondary me-3" style="font-size: 0.9rem;"><i class="fas fa-users me-1"></i>注册: {{ user_count }}</span>
             <a href="/logout" class="text-secondary text-decoration-none" style="font-size: 0.9rem;"><i class="fas fa-sign-out-alt"></i> 退出</a>
         </div>
     </div>
@@ -147,7 +144,7 @@
             </div>
         </form>
     </div>
-    <div class="text-center mt-4 text-muted" style="font-size: 0.75rem; opacity: 0.6;">Lottery Assistant V7.7</div>
+    <div class="text-center mt-4 text-muted" style="font-size: 0.75rem; opacity: 0.6;">Lottery Assistant V7.8</div>
 </div>
 
 <div class="modal fade" id="addModal" tabindex="-1">
@@ -164,7 +161,10 @@
             <div class="bg-light p-3 rounded-3 mb-3">
                 <div class="row g-2 align-items-center">
                     <div class="col-4"><label class="small text-muted d-block">开始期号</label><input type="number" class="form-control border-0 shadow-sm" name="start_term" id="startTerm" required style="font-weight: bold;"></div>
-                    <div class="col-4"><label class="small text-muted d-block">连买(期)</label><input type="number" class="form-control border-0 shadow-sm text-center text-primary fw-bold" id="termCount" value="1" min="1" max="30" required></div>
+                    <div class="col-4"><label class="small text-muted d-block">连买(期)</label>
+                        <!-- ★★★ V7.8 修改：最大期数改为 20 ★★★ -->
+                        <input type="number" class="form-control border-0 shadow-sm text-center text-primary fw-bold" id="termCount" value="1" min="1" max="20" required>
+                    </div>
                     <div class="col-4"><label class="small text-muted d-block">结束期号</label><input type="number" class="form-control border-0 bg-white shadow-sm text-muted" name="end_term" id="endTerm" readonly tabindex="-1"></div>
                 </div>
             </div>
