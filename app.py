@@ -331,6 +331,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+login_manager.login_message = '🔒 请先登录后访问此页面'
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
