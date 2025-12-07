@@ -4,8 +4,12 @@ Flask-Login>=0.6.0
 requests>=2.31.0
 APScheduler>=3.10.0
 werkzeug>=2.3.0
-# OCR识别依赖 (与 Umi-OCR 底层相同的 PaddleOCR 引擎)
-rapidocr-onnxruntime==1.3.24
-opencv-python-headless==4.9.0.80
-numpy==1.26.4
-Pillow>=9.0.0
+# OCR识别核心 (ONNXRuntime版本，轻量且适合NAS/Docker)
+rapidocr-onnxruntime>=1.3.24
+# 图像处理依赖
+opencv-python-headless>=4.9.0.80
+numpy>=1.26.0
+Pillow>=10.0.0
+# 解决部分环境下 shapely 缺失问题
+Shapely>=2.0.0
+pyclipper>=1.3.0

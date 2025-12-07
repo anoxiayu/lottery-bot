@@ -10,9 +10,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 # 启用低功耗模式（优化 NAS/低功耗处理器上的 OCR 识别）
 ENV LOW_POWER_MODE=true
+
+# 设置时区
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 安装系统依赖 (RapidOCR/OpenCV 需要)
+# 修复：移除了在新版 Debian 中已废弃的 libgl1-mesa-glx
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
@@ -33,7 +36,7 @@ RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua
 # 复制所有代码
 COPY . .
 
-# 暂露端口
+# 暴露端口
 EXPOSE 5000
 
 # 健康检查
