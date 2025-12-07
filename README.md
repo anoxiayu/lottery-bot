@@ -181,4 +181,3 @@ docker run -d -p 5000:5000 -v $(pwd)/data:/app/data my-lotto-local
 <div align="center">
     <small>Lottery bot | Powered by Flask & Docker | Made by Anoxiayu</small>
 </div>
-```
