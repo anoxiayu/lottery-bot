@@ -3,8 +3,8 @@
 
 # 🎲 大乐透管家 (Lottery Bot)
 
-[![Python](https://img.shields.io/badge/Python-3.9-blue.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.3-green.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.3+-green.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Docker Image](https://img.shields.io/badge/Docker%20Pull-anoxiayu%2Flottery--bot-blue.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
@@ -20,11 +20,48 @@
 
 *   **📊 全自动兑奖**：每日定时同步官方开奖数据，自动计算中奖等级与金额（支持所有奖级）。
 *   **🎫 多期智能管理**：支持设置“开始期号”与“连买期数”（1-30期），系统自动计算有效期，过期自动归档。
-*   **📲 隐私推送**：集成 [Server酱](https://sct.ftqq.com/)，支持 Key 前端打码显示。仅在开奖日且在有效期内推送，拒绝垃圾信息。
+*   **📲 隐私推送**：集成 [Server酱](https://sct.ftqq.com/)，支持 Key 前端打码显示。仅在开奖日且在有效期内推送。
 *   **🕒 自定义计划**：支持在网页端直接修改每日自动检查的时间（默认 22:00），无需重启容器。
 *   **📜 历史回溯报告**：一键生成某注号码在过去 50 期内的中奖情况汇总，并推送到微信。
 *   **🎨 拟态 UI 设计**：采用精美的 3D 拟态风格圆球设计，完美适配手机端操作。
 *   **🔐 数据安全**：支持多用户隔离，支持 Docker 挂载持久化存储，重启不丢失数据。
+
+### 🆕 V2.0 新增功能
+
+*   **👤 管理员后台**：第一个注册用户自动成为管理员，可管理所有用户、审核新用户、禁用/删除账户。
+*   **✅ 新用户审核**：新注册用户需管理员审核后才能登录使用。
+*   **🔑 密码找回**：用户可申请密码重置，管理员审核后生效。
+*   **📷 拍照添加彩票**：支持拍照/上传图片，集成 **RapidOCR**（PaddleOCR 引擎）自动识别彩票号码和期数。
+*   **🎲 随机号码生成**：一键生成随机大乐透号码组合。
+*   **🎮 模拟购彩**：支持模拟购彩模式，不计入统计，方便练习。
+*   **🗑️ 过期自动删除**：可选开启自动删除过期彩票功能。
+*   **✏️ 彩票编辑**：支持修改已添加的彩票号码和期数。
+*   **📱 移动端适配**：管理后台完美适配手机端显示。
+
+---
+
+## 🧠 OCR 识别技术
+
+本项目集成 **RapidOCR**（与 Umi-OCR 底层相同的 PaddleOCR 引擎），采用**多策略识别**技术，提升彩票号码识别准确率。
+
+### 特点
+
+- ✅ **内置集成**：无需单独安装 OCR 软件
+- ✅ **离线识别**：不需要网络，本地处理
+- ✅ **高精度**：基于 PaddleOCR，中文识别效果好
+- ✅ **多策略识别**：自动尝试多种图片预处理方案，取最优结果
+- ✅ **Docker 支持**：容器自动包含所有依赖
+
+### 多策略识别方案
+
+系统会自动尝试以下 4 种图片预处理策略，选择识别效果最佳的结果：
+
+| 策略 | 说明 | 适用场景 |
+|------|------|----------|
+| **标准处理** | 增强对比度+锐化 | 大多数场景 |
+| **高对比度** | 2.2倍对比度增强+双重锐化 | 彩票颜色淡 |
+| **二值化** | Otsu 自适应阈值二值化 | 背景复杂 |
+| **降噪处理** | 非局部均值降噪+增强 | 图片噪点多 |
 
 ---
 

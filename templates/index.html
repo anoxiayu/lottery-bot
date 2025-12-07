@@ -41,6 +41,30 @@
         .btn-check-now { background: #ff4757; border: none; color: white; box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3); }
         .btn-rules { background: #20bf6b; border: none; color: white; box-shadow: 0 4px 10px rgba(32, 191, 107, 0.3); }
         .badge-custom { font-weight: 500; padding: 5px 10px; border-radius: 6px; }
+        /* 开关样式 */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #27ae60; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .simulation-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .sim-badge { background: rgba(255,255,255,0.3); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; }
+        .btn-random { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; }
+        .btn-camera { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none; color: white; }
+        .camera-preview { width: 100%; max-height: 300px; object-fit: cover; border-radius: 12px; display: none; }
+        .ocr-result { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .ocr-ticket { background: white; border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid #e9ecef; }
+        .random-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 20px; color: white; margin-bottom: 20px; }
+        .random-ball { width: 42px; height: 42px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-weight: bold; font-size: 16px; margin: 4px; color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+        .random-ball.red { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+        .random-ball.blue { background: linear-gradient(135deg, #74b9ff, #0984e3); }
+        .btn-action { font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; text-decoration: none; display: inline-block; }
+        .btn-history { background: #3498db; color: white; }
+        .btn-edit { background: #f39c12; color: white; }
+        .btn-del { background: #e74c3c; color: white; }
+        .ocr-loading { text-align: center; padding: 20px; }
+        .ocr-loading .spinner-border { width: 3rem; height: 3rem; }
     </style>
 </head>
 <body>
@@ -50,8 +74,14 @@
         <div class="d-flex align-items-center">
             <div style="width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; margin-right: 8px;"></div>
             <span class="fw-bold text-dark">{{ user.username }}</span>
+            {% if is_admin %}
+            <span class="badge bg-danger ms-2" style="font-size: 0.7rem;">Admin</span>
+            {% endif %}
         </div>
         <div>
+            {% if is_admin %}
+            <a href="/admin" class="text-danger text-decoration-none me-3" style="font-size: 0.9rem;"><i class="fas fa-cogs me-1"></i>管理后台</a>
+            {% endif %}
             <span class="text-secondary me-3" style="font-size: 0.9rem;"><i class="fas fa-users me-1"></i>注册: {{ user_count }}</span>
             <a href="/logout" class="text-secondary text-decoration-none" style="font-size: 0.9rem;"><i class="fas fa-sign-out-alt"></i> 退出</a>
         </div>
@@ -83,10 +113,42 @@
         {% endif %}
     </div>
 
+    <!-- 随机号码生成模块 -->
+    {% if user.enable_random_generator %}
+    <div class="random-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="m-0 fw-bold"><i class="fas fa-dice me-2"></i>随机号码生成器</h6>
+            <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold" onclick="generateRandomDisplay()">
+                <i class="fas fa-sync-alt me-1"></i>重新生成
+            </button>
+        </div>
+        <div class="text-center py-2" id="randomNumbersDisplay">
+            <div class="mb-2">
+                <span class="random-ball red" id="rand_r1">--</span>
+                <span class="random-ball red" id="rand_r2">--</span>
+                <span class="random-ball red" id="rand_r3">--</span>
+                <span class="random-ball red" id="rand_r4">--</span>
+                <span class="random-ball red" id="rand_r5">--</span>
+                <span class="mx-2 text-white">+</span>
+                <span class="random-ball blue" id="rand_b1">--</span>
+                <span class="random-ball blue" id="rand_b2">--</span>
+            </div>
+        </div>
+        <div class="text-center mt-2">
+            <button class="btn btn-outline-light btn-sm rounded-pill px-4" onclick="useRandomNumbers()">
+                <i class="fas fa-arrow-right me-1"></i>使用这组号码
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="content-card mb-4">
         <div class="card-header-custom d-flex justify-content-between align-items-center">
             <h6 class="m-0 fw-bold text-dark"><i class="fas fa-ticket-alt text-primary me-2"></i>我的彩票</h6>
-            <button class="btn btn-sm btn-primary btn-add-main rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#addModal">+ 添加</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-camera rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#cameraModal"><i class="fas fa-camera"></i></button>
+                <button class="btn btn-sm btn-primary btn-add-main rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#addModal">+ 添加</button>
+            </div>
         </div>
         <div class="list-content">
             {% if tickets %}
@@ -108,10 +170,11 @@
                             <span class="mx-1"></span>
                             {% for n in item.ticket.blue_nums.split(',') %} <span class="ball {{ 'hit-b' if n in item.status.hit_blues else 'miss' }}">{{ n }}</span> {% endfor %}
                         </div>
-                        <div class="d-flex gap-2 ms-2">
-                             <a href="/history/{{ item.ticket.id }}" class="text-primary" title="查询往期"><i class="fas fa-history"></i></a>
-                             <a href="/delete/{{ item.ticket.id }}" class="text-secondary" onclick="return confirm('确认删除此记录？')" title="删除"><i class="fas fa-trash-alt"></i></a>
-                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-2 justify-content-end">
+                        <a href="/history/{{ item.ticket.id }}" class="btn-action btn-history">查看历史</a>
+                        <a href="#" class="btn-action btn-edit" onclick="openEditModal({{ item.ticket.id }}, '{{ item.ticket.red_nums }}', '{{ item.ticket.blue_nums }}', '{{ item.ticket.note or '' }}', {{ item.ticket.start_term }}, {{ item.ticket.end_term }}, {{ 'true' if item.ticket.is_simulation else 'false' }})">修改</a>
+                        <a href="/delete/{{ item.ticket.id }}" class="btn-action btn-del" onclick="return confirm('确认删除此记录？')">删除</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -121,20 +184,102 @@
         </div>
     </div>
 
+    <!-- 模拟购彩区域 -->
+    {% if user.enable_simulation %}
+    <div class="content-card mb-4">
+        <div class="card-header-custom d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h6 class="m-0 fw-bold text-white"><i class="fas fa-gamepad me-2"></i>模拟购彩</h6>
+            <span class="sim-badge">不计入统计</span>
+        </div>
+        <div class="list-content">
+            {% if simulation_tickets %}
+                {% for item in simulation_tickets %}
+                <div class="ticket-item {{ 'win-bg' if item.status.prize > 0 else '' }} {{ 'expired-item' if item.status.state == 'expired' else '' }}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="fw-bold text-dark">{{ item.ticket.note or '模拟号码' }}</span>
+                            <span class="badge bg-pink text-white ms-2" style="font-size: 0.65rem; background: #f093fb;">模拟</span>
+                            <span class="text-muted ms-2" style="font-size: 0.75rem;"><i class="far fa-clock"></i> {{ item.ticket.start_term }} - {{ item.ticket.end_term }}期</span>
+                        </div>
+                        {% if item.status.state == 'expired' %} <span class="badge-custom bg-secondary text-white" style="font-size: 10px;">已过期</span>
+                        {% elif item.status.state == 'future' %} <span class="badge-custom bg-info text-white" style="font-size: 10px;">待开奖</span>
+                        {% elif item.status.prize > 0 %} <span class="badge-custom bg-warning text-dark border border-warning shadow-sm">{{ item.status.level }} <span class="fw-bold text-danger">￥{{ item.status.prize }}</span></span>
+                        {% else %} <span class="badge-custom bg-light text-secondary">未中奖</span> {% endif %}
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center flex-wrap">
+                            {% for n in item.ticket.red_nums.split(',') %} <span class="ball {{ 'hit-r' if n in item.status.hit_reds else 'miss' }}">{{ n }}</span> {% endfor %}
+                            <span class="mx-1"></span>
+                            {% for n in item.ticket.blue_nums.split(',') %} <span class="ball {{ 'hit-b' if n in item.status.hit_blues else 'miss' }}">{{ n }}</span> {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-2 justify-content-end">
+                        <a href="/history/{{ item.ticket.id }}" class="btn-action btn-history">查看历史</a>
+                        <a href="#" class="btn-action btn-edit" onclick="openEditModal({{ item.ticket.id }}, '{{ item.ticket.red_nums }}', '{{ item.ticket.blue_nums }}', '{{ item.ticket.note or '' }}', {{ item.ticket.start_term }}, {{ item.ticket.end_term }}, {{ 'true' if item.ticket.is_simulation else 'false' }})">修改</a>
+                        <a href="/delete/{{ item.ticket.id }}" class="btn-action btn-del" onclick="return confirm('确认删除此记录？')">删除</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4"><p class="text-muted small mb-2">暂无模拟彩票</p><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addModal" onclick="document.getElementById('isSimulation').value='1'">添加模拟号码</button></div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="content-card p-3">
         <div class="d-flex align-items-center mb-3"><h6 class="fw-bold m-0 flex-grow-1"><i class="fas fa-cog text-secondary me-2"></i>系统设置</h6></div>
         <form action="/update_settings" method="POST">
             <label class="small text-muted fw-bold mb-1">Server酱 Key</label>
+            <input type="hidden" name="sckey_full" id="sckeyFull" value="{{ user.sckey or '' }}">
             <div class="input-group mb-3">
                 <span class="input-group-text bg-light"><i class="fas fa-key text-muted"></i></span>
-                <input type="text" class="form-control" name="sckey" 
+                <input type="text" class="form-control" id="sckeyDisplay" 
                        value="{% if user.sckey %}{{ user.sckey[:3] }}******{{ user.sckey[-4:] }}{% endif %}" 
-                       placeholder="请输入 Server酱 Key">
+                       placeholder="请输入 Server酱 Key" onfocus="showFullSckey()" onblur="hideFullSckey()">
+                <input type="hidden" name="sckey" id="sckeyInput" value="">
             </div>
             <label class="small text-muted fw-bold mb-1">自动推送时间 (周一/三/六)</label>
             <div class="input-group mb-3">
                 <span class="input-group-text bg-light"><i class="far fa-clock text-muted"></i></span>
                 <input type="time" class="form-control" name="push_time" value="{{ push_time }}">
+            </div>
+            
+            <!-- 功能开关 -->
+            <div class="bg-light rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <i class="fas fa-trash-alt text-danger me-2"></i>
+                        <span class="fw-bold">过期自动删除</span>
+                        <div class="text-muted small">自动删除已过期的彩票记录</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="auto_delete_expired" {{ 'checked' if user.auto_delete_expired else '' }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <i class="fas fa-gamepad text-primary me-2"></i>
+                        <span class="fw-bold">模拟购彩模式</span>
+                        <div class="text-muted small">开启后可添加模拟彩票</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="enable_simulation" {{ 'checked' if user.enable_simulation else '' }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-dice text-purple me-2" style="color: #764ba2;"></i>
+                        <span class="fw-bold">随机号码生成器</span>
+                        <div class="text-muted small">开启后显示随机号码模块</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="enable_random_generator" {{ 'checked' if user.enable_random_generator else '' }}>
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
             
             <div class="d-flex gap-2">
@@ -153,21 +298,29 @@
       <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold ps-2">🎲 添加号码</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body pt-4">
         <form action="/add" method="POST" id="ballForm">
-            <div class="mb-2 text-muted small fw-bold ps-2">前区 (红球)</div>
-            <div class="input-group-balls">{% for i in range(1,6) %}<input type="tel" class="input-ball input-red jump-input" name="r{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
+            <input type="hidden" name="is_simulation" id="isSimulation" value="0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="mb-2 text-muted small fw-bold ps-2">前区 (红球)</div>
+            </div>
+            <div class="input-group-balls">{% for i in range(1,6) %}<input type="tel" class="input-ball input-red jump-input" name="r{{i}}" id="r{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
             <div class="mb-2 text-muted small fw-bold ps-2">后区 (蓝球)</div>
-            <div class="input-group-balls">{% for i in range(1,3) %}<input type="tel" class="input-ball input-blue jump-input" name="b{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
+            <div class="input-group-balls">{% for i in range(1,3) %}<input type="tel" class="input-ball input-blue jump-input" name="b{{i}}" id="b{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
             <hr class="my-4 opacity-10">
             <div class="bg-light p-3 rounded-3 mb-3">
                 <div class="row g-2 align-items-center">
                     <div class="col-4"><label class="small text-muted d-block">开始期号</label><input type="number" class="form-control border-0 shadow-sm" name="start_term" id="startTerm" required style="font-weight: bold;"></div>
                     <div class="col-4"><label class="small text-muted d-block">连买(期)</label>
-                        <!-- ★★★ V7.8 修改：最大期数改为 20 ★★★ -->
                         <input type="number" class="form-control border-0 shadow-sm text-center text-primary fw-bold" id="termCount" value="1" min="1" max="20" required>
                     </div>
                     <div class="col-4"><label class="small text-muted d-block">结束期号</label><input type="number" class="form-control border-0 bg-white shadow-sm text-muted" name="end_term" id="endTerm" readonly tabindex="-1"></div>
                 </div>
             </div>
+            {% if user.enable_simulation %}
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="simCheck" onchange="document.getElementById('isSimulation').value = this.checked ? '1' : '0'">
+                <label class="form-check-label" for="simCheck"><i class="fas fa-gamepad text-primary me-1"></i>添加为模拟购彩</label>
+            </div>
+            {% endif %}
             <div class="mb-3"><input type="text" class="form-control py-2 rounded-3" name="note" placeholder="备注 (例如: 老婆生日号)"></div>
             <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm btn-add-main">确认保存</button>
         </form>
@@ -175,8 +328,613 @@
     </div>
   </div>
 </div>
+
+<!-- 编辑彩票弹窗 -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold ps-2">✏️ 修改彩票</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body pt-4">
+        <form action="/edit_ticket" method="POST" id="editForm">
+            <input type="hidden" name="ticket_id" id="editTicketId">
+            <input type="hidden" name="is_simulation" id="editIsSimulation" value="0">
+            <div class="mb-2 text-muted small fw-bold ps-2">前区 (红球)</div>
+            <div class="input-group-balls">{% for i in range(1,6) %}<input type="tel" class="input-ball input-red edit-jump-input" name="edit_r{{i}}" id="edit_r{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
+            <div class="mb-2 text-muted small fw-bold ps-2">后区 (蓝球)</div>
+            <div class="input-group-balls">{% for i in range(1,3) %}<input type="tel" class="input-ball input-blue edit-jump-input" name="edit_b{{i}}" id="edit_b{{i}}" maxlength="2" required autocomplete="off">{% endfor %}</div>
+            <hr class="my-4 opacity-10">
+            <div class="bg-light p-3 rounded-3 mb-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-6"><label class="small text-muted d-block">开始期号</label><input type="number" class="form-control border-0 shadow-sm" name="edit_start_term" id="editStartTerm" required style="font-weight: bold;"></div>
+                    <div class="col-6"><label class="small text-muted d-block">结束期号</label><input type="number" class="form-control border-0 shadow-sm" name="edit_end_term" id="editEndTerm" required style="font-weight: bold;"></div>
+                </div>
+            </div>
+            <div class="mb-3"><input type="text" class="form-control py-2 rounded-3" name="edit_note" id="editNote" placeholder="备注"></div>
+            <button type="submit" class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm">保存修改</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 拍照上传弹窗 -->
+<div class="modal fade" id="cameraModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0"><h5 class="modal-title fw-bold ps-2">📷 拍照添加彩票</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body pt-4">
+        <!-- 拍照引导提示 -->
+        <div class="alert alert-warning py-2 mb-3" id="photoGuide">
+            <div class="fw-bold mb-1"><i class="fas fa-lightbulb me-1"></i>拍照小技巧</div>
+            <ul class="small mb-0 ps-3">
+                <li>确保光线充足，避免阴影遮挡</li>
+                <li>将彩票平整放置，正对拍摄</li>
+                <li>号码区域清晰可见，避免反光</li>
+                <li>尽量让彩票占满画面</li>
+            </ul>
+        </div>
+        
+        <div class="text-center mb-3">
+            <canvas id="captureCanvas" style="display:none;"></canvas>
+            <img id="capturedImage" class="camera-preview">
+        </div>
+        
+        <div class="d-flex gap-2 mb-3" id="cameraControls">
+            <label class="btn btn-camera flex-grow-1 m-0 py-3" style="cursor:pointer;">
+                <i class="fas fa-camera me-2"></i>拍照
+                <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none;" onchange="handleCameraCapture(this)">
+            </label>
+            <label class="btn btn-outline-secondary flex-grow-1 m-0 py-3" style="cursor:pointer;">
+                <i class="fas fa-image me-2"></i>上传照片
+                <input type="file" accept="image/*" id="imageInput" style="display:none;" onchange="handleImageSelect(this)">
+            </label>
+        </div>
+        
+        <div id="ocrResult" class="ocr-result" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="m-0 fw-bold"><i class="fas fa-list-check text-success me-2"></i>识别结果</h6>
+                <span class="badge bg-primary" id="ocrCount">0 注</span>
+            </div>
+            <div id="ocrTickets"></div>
+            <div class="bg-light p-3 rounded-3 mb-3">
+                <div class="row g-2">
+                    <div class="col-6"><label class="small text-muted">开始期号</label><input type="number" class="form-control" id="ocrStartTerm"></div>
+                    <div class="col-6"><label class="small text-muted">结束期号</label><input type="number" class="form-control" id="ocrEndTerm"></div>
+                </div>
+            </div>
+            {% if user.enable_simulation %}
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="ocrSimCheck">
+                <label class="form-check-label" for="ocrSimCheck"><i class="fas fa-gamepad text-primary me-1"></i>添加为模拟购彩</label>
+            </div>
+            {% endif %}
+            <button type="button" class="btn btn-success w-100" onclick="submitOcrTickets()"><i class="fas fa-check me-2"></i>确认添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // 随机号码生成器（页面模块）
+    let currentRandomReds = [];
+    let currentRandomBlues = [];
+    
+    function generateRandomDisplay() {
+        currentRandomReds = [];
+        while(currentRandomReds.length < 5) {
+            let n = Math.floor(Math.random() * 35) + 1;
+            if(!currentRandomReds.includes(n)) currentRandomReds.push(n);
+        }
+        currentRandomReds.sort((a,b) => a - b);
+        
+        currentRandomBlues = [];
+        while(currentRandomBlues.length < 2) {
+            let n = Math.floor(Math.random() * 12) + 1;
+            if(!currentRandomBlues.includes(n)) currentRandomBlues.push(n);
+        }
+        currentRandomBlues.sort((a,b) => a - b);
+        
+        // 更新显示
+        currentRandomReds.forEach((n, i) => {
+            document.getElementById('rand_r' + (i+1)).textContent = n.toString().padStart(2, '0');
+        });
+        currentRandomBlues.forEach((n, i) => {
+            document.getElementById('rand_b' + (i+1)).textContent = n.toString().padStart(2, '0');
+        });
+    }
+    
+    function useRandomNumbers() {
+        if(currentRandomReds.length === 0) {
+            generateRandomDisplay();
+        }
+        // 填充到添加表单
+        currentRandomReds.forEach((n, i) => {
+            document.getElementById('r' + (i+1)).value = n.toString().padStart(2, '0');
+        });
+        currentRandomBlues.forEach((n, i) => {
+            document.getElementById('b' + (i+1)).value = n.toString().padStart(2, '0');
+        });
+        // 打开添加弹窗
+        new bootstrap.Modal(document.getElementById('addModal')).show();
+    }
+    
+    // 页面加载时自动生成一组
+    document.addEventListener('DOMContentLoaded', function() {
+        generateRandomDisplay();
+    });
+
+    // 编辑彩票模态框
+    function openEditModal(id, reds, blues, note, startTerm, endTerm, isSim) {
+        document.getElementById('editTicketId').value = id;
+        document.getElementById('editIsSimulation').value = isSim ? '1' : '0';
+        document.getElementById('editNote').value = note;
+        document.getElementById('editStartTerm').value = startTerm;
+        document.getElementById('editEndTerm').value = endTerm;
+        
+        const redArr = reds.split(',');
+        const blueArr = blues.split(',');
+        redArr.forEach((n, i) => {
+            document.getElementById('edit_r' + (i+1)).value = n;
+        });
+        blueArr.forEach((n, i) => {
+            document.getElementById('edit_b' + (i+1)).value = n;
+        });
+        
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+    
+    // 编辑表单输入跳转
+    document.addEventListener('DOMContentLoaded', function() {
+        const editInputs = document.querySelectorAll('.edit-jump-input');
+        editInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if (this.value.length >= 2) {
+                    let val = parseInt(this.value);
+                    if (this.classList.contains('input-red') && (val < 1 || val > 35)) this.value = '';
+                    if (this.classList.contains('input-blue') && (val < 1 || val > 12)) this.value = '';
+                    if (this.value.length === 2 && editInputs[index + 1]) editInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', function(e) { 
+                if (e.key === "Backspace" && this.value.length === 0 && editInputs[index - 1]) editInputs[index - 1].focus(); 
+            });
+            input.addEventListener('focus', function() { this.select(); });
+        });
+    });
+
+    // Server酱 Key 显示/隐藏处理
+    let sckeyEdited = false;
+    function showFullSckey() {
+        const display = document.getElementById('sckeyDisplay');
+        const full = document.getElementById('sckeyFull').value;
+        if(full && !sckeyEdited) {
+            display.value = full;
+        }
+    }
+    function hideFullSckey() {
+        const display = document.getElementById('sckeyDisplay');
+        const full = document.getElementById('sckeyFull').value;
+        // 如果用户修改了，记录新值
+        if(display.value !== full && display.value.indexOf('******') === -1) {
+            sckeyEdited = true;
+            document.getElementById('sckeyInput').value = display.value;
+        } else if(!sckeyEdited && full) {
+            display.value = full.substring(0,3) + '******' + full.slice(-4);
+        }
+    }
+    // 表单提交前确保值正确
+    document.querySelector('form[action="/update_settings"]').addEventListener('submit', function() {
+        const display = document.getElementById('sckeyDisplay');
+        const input = document.getElementById('sckeyInput');
+        if(display.value.indexOf('******') === -1) {
+            input.value = display.value;
+        }
+    });
+
+    // 随机生成号码（添加弹窗内）
+    function generateRandom() {
+        let reds = [];
+        while(reds.length < 5) {
+            let n = Math.floor(Math.random() * 35) + 1;
+            if(!reds.includes(n)) reds.push(n);
+        }
+        reds.sort((a,b) => a - b);
+        reds.forEach((n, i) => {
+            document.getElementById('r' + (i+1)).value = n.toString().padStart(2, '0');
+        });
+        let blues = [];
+        while(blues.length < 2) {
+            let n = Math.floor(Math.random() * 12) + 1;
+            if(!blues.includes(n)) blues.push(n);
+        }
+        blues.sort((a,b) => a - b);
+        blues.forEach((n, i) => {
+            document.getElementById('b' + (i+1)).value = n.toString().padStart(2, '0');
+        });
+    }
+
+    // 拍照相关
+    let ocrTicketsData = [];
+
+    // 手机原生相机拍照处理
+    function handleCameraCapture(input) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('capturedImage');
+                img.src = e.target.result;
+                img.style.display = 'block';
+                // 隐藏拍照引导提示
+                document.getElementById('photoGuide').style.display = 'none';
+                performOCR(e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // 上传照片处理
+    function handleImageSelect(input) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('capturedImage');
+                img.src = e.target.result;
+                img.style.display = 'block';
+                // 隐藏拍照引导提示
+                document.getElementById('photoGuide').style.display = 'none';
+                performOCR(e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+
+    // OCR识别 - 使用 Umi-OCR
+    let ocrProgress = 0;
+    
+    function updateOcrProgressUI(status, percent) {
+        const ocrResult = document.getElementById('ocrResult');
+        if(!ocrResult) return;
+        
+        ocrResult.innerHTML = `
+            <div class="ocr-loading">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <div class="text-center">
+                    <div class="mb-2 text-muted">${status}</div>
+                    <div class="progress" style="width:200px;margin:0 auto;height:6px;">
+                        <div class="progress-bar" role="progressbar" style="width:${percent}%"></div>
+                    </div>
+                    <small class="text-muted mt-1">${percent}%</small>
+                </div>
+            </div>`;
+    }
+    
+    function performOCR(imageData) {
+        const ocrResult = document.getElementById('ocrResult');
+        ocrResult.style.display = 'block';
+        
+        // 显示进度
+        updateOcrProgressUI('⭐ 正在连接 OCR 服务...', 10);
+        
+        // 模拟进度更新
+        let progress = 10;
+        const progressSteps = [
+            { at: 20, msg: '📷 图片预处理中...' },
+            { at: 35, msg: '🔍 策略一: 标准处理识别...' },
+            { at: 50, msg: '🔍 策略二: 高对比度识别...' },
+            { at: 65, msg: '🔍 策略三: 二值化处理...' },
+            { at: 80, msg: '🔍 策略四: 降噪处理...' },
+            { at: 90, msg: '✨ 选择最佳识别结果...' }
+        ];
+        let stepIndex = 0;
+        const progressTimer = setInterval(() => {
+            if(progress < 90) {
+                progress += Math.random() * 10;
+                if(progress > 90) progress = 90;
+                // 根据进度更新提示信息
+                while(stepIndex < progressSteps.length && progress >= progressSteps[stepIndex].at) {
+                    updateOcrProgressUI(progressSteps[stepIndex].msg, Math.round(progress));
+                    stepIndex++;
+                }
+                if(stepIndex === 0) {
+                    updateOcrProgressUI('⭐ 正在连接 OCR 服务...', Math.round(progress));
+                }
+            }
+        }, 400);
+        
+        // 调用后端 OCR 接口
+        fetch('/ocr', {
+            method: 'POST',
+
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+        })
+        .then(res => res.json())
+        .then(data => {
+            clearInterval(progressTimer);
+            updateOcrProgressUI('✅ 识别完成，正在解析...', 100);
+            
+            console.log('[RapidOCR] 后端返回:', data);
+            
+            if(data.success) {
+                console.log('[RapidOCR] 识别文本:\n', data.text);
+                console.log('[RapidOCR] 使用策略:', data.strategy || '默认');
+                displayOcrResults({
+                    tickets: data.tickets || [],
+                    startTerm: data.startTerm,
+                    termCount: data.termCount || 1,
+                    needConfirm: data.needConfirm || false,
+                    strategy: data.strategy || null
+                });
+            } else {
+                console.error('[RapidOCR] 识别失败:', data.error);
+                displayOcrResults({
+                    tickets: [],
+                    startTerm: null,
+                    termCount: 1,
+                    needConfirm: true,
+                    errorMsg: data.error || '识别失败'
+                });
+            }
+        })
+        .catch(err => {
+            clearInterval(progressTimer);
+            console.error('[RapidOCR] 请求失败:', err);
+            displayOcrResults({
+                tickets: [],
+                startTerm: null,
+                termCount: 1,
+                needConfirm: true,
+                errorMsg: '网络请求失败: ' + err.message
+            });
+        });
+    }
+    
+    function displayOcrResults(parseResult) {
+        const ocrResult = document.getElementById('ocrResult');
+        const latestTerm = parseInt(document.getElementById('latestTerm').value) || 0;
+        
+        // 使用识别的期号，如果没识别到则用最新期+1
+        let tickets, startTerm, endTerm;
+        if(Array.isArray(parseResult)) {
+            // 兼容旧的调用方式
+            tickets = parseResult;
+            startTerm = latestTerm + 1;
+            endTerm = latestTerm + 1;
+        } else {
+            tickets = parseResult.tickets;
+            startTerm = parseResult.startTerm || (latestTerm + 1);
+            endTerm = startTerm + (parseResult.termCount || 1) - 1;
+        }
+        
+        let html = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="m-0 fw-bold"><i class="fas fa-list-check text-success me-2"></i>识别结果</h6>
+                <div>
+                    ${parseResult.strategy ? '<span class="badge bg-info me-2" title="使用的识别策略"><i class="fas fa-magic me-1"></i>' + parseResult.strategy + '</span>' : ''}
+                    <span class="badge bg-primary" id="ocrCount">${tickets.length} 注</span>
+                </div>
+            </div>
+            <div id="ocrTickets">`;        
+        if(tickets.length > 0) {
+            tickets.forEach((t, idx) => {
+                html += createOcrTicketRowHtml(idx, t.reds, t.blues);
+            });
+        } else {
+            // 没有识别到，添加空行让用户手动输入
+            html += createOcrTicketRowHtml(0, ['','','','',''], ['','']);
+        }
+        
+        html += `</div>
+            <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-3" onclick="addOcrTicketRow()"><i class="fas fa-plus me-2"></i>添加更多彩票</button>
+            ${parseResult.errorMsg ? '<div class="alert alert-danger py-2 mb-3"><i class="fas fa-exclamation-circle me-2"></i><strong>识别失败：</strong>' + parseResult.errorMsg + '，请手动输入</div>' : ''}
+            <div class="alert alert-info py-2 mb-3"><i class="fas fa-info-circle me-2"></i><strong>提示：</strong>请仔细核对识别结果，确保号码和期数正确</div>
+            ${parseResult.needConfirm ? '<div class="alert alert-warning py-2 mb-3"><i class="fas fa-exclamation-triangle me-2"></i><strong>注意：</strong>未自动识别到期号，请手动填写开始期号</div>' : ''}
+            <div class="bg-light p-3 rounded-3 mb-3">
+                <div class="row g-2">
+                    <div class="col-4"><label class="small text-muted">开始期号</label><input type="number" class="form-control" id="ocrStartTerm" value="${startTerm}" onchange="updateOcrEndTerm()"></div>
+                    <div class="col-4"><label class="small text-muted">购买期数</label><input type="number" class="form-control" id="ocrTermCount" value="${parseResult.termCount || 1}" min="1" max="30" onchange="updateOcrEndTerm()"></div>
+                    <div class="col-4"><label class="small text-muted">结束期号</label><input type="number" class="form-control bg-white" id="ocrEndTerm" value="${endTerm}" readonly></div>
+                </div>
+            </div>
+            <div class="form-check mb-3" id="ocrSimCheckDiv">
+                <input class="form-check-input" type="checkbox" id="ocrSimCheck">
+                <label class="form-check-label" for="ocrSimCheck"><i class="fas fa-gamepad text-primary me-1"></i>添加为模拟购彩</label>
+            </div>
+            <button type="button" class="btn btn-success w-100" onclick="submitOcrTickets()"><i class="fas fa-check me-2"></i>确认添加</button>`;
+        
+        ocrResult.innerHTML = html;
+        // 绑定OCR输入框跳转
+        bindOcrInputJump();
+    }
+    
+    function createOcrTicketRowHtml(idx, reds, blues) {
+        return `
+            <div class="ocr-ticket">
+                <div class="d-flex gap-2 mb-2">
+                    <span class="badge bg-secondary">第${idx+1}注</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="this.parentElement.parentElement.remove();updateOcrCount();">&times;</button>
+                </div>
+                <div class="row g-1 mb-2">
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${reds[0] || ''}" placeholder="01" maxlength="2" data-type="red"></div>
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${reds[1] || ''}" placeholder="02" maxlength="2" data-type="red"></div>
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${reds[2] || ''}" placeholder="03" maxlength="2" data-type="red"></div>
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${reds[3] || ''}" placeholder="04" maxlength="2" data-type="red"></div>
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${reds[4] || ''}" placeholder="05" maxlength="2" data-type="red"></div>
+                    <div class="col-auto text-muted">+</div>
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${blues[0] || ''}" placeholder="01" maxlength="2" data-type="blue" style="background:#f0f8ff;"></div>
+                    <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" value="${blues[1] || ''}" placeholder="02" maxlength="2" data-type="blue" style="background:#f0f8ff;"></div>
+                </div>
+            </div>`;
+    }
+    
+    function bindOcrInputJump() {
+        const ocrInputs = document.querySelectorAll('.ocr-input');
+        ocrInputs.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                if(this.value.length >= 2 && ocrInputs[index + 1]) {
+                    ocrInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', function(e) {
+                if(e.key === 'Backspace' && this.value.length === 0 && ocrInputs[index - 1]) {
+                    ocrInputs[index - 1].focus();
+                }
+            });
+            input.addEventListener('focus', function() { this.select(); });
+        });
+    }
+
+    function addOcrTicketRow() {
+        const container = document.getElementById('ocrTickets');
+        const idx = container.children.length;
+        const div = document.createElement('div');
+        div.className = 'ocr-ticket';
+        div.innerHTML = `
+            <div class="d-flex gap-2 mb-2">
+                <span class="badge bg-secondary">第${idx+1}注</span>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="this.parentElement.parentElement.remove();updateOcrCount();">&times;</button>
+            </div>
+            <div class="row g-1 mb-2">
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="01" maxlength="2" data-type="red"></div>
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="02" maxlength="2" data-type="red"></div>
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="03" maxlength="2" data-type="red"></div>
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="04" maxlength="2" data-type="red"></div>
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="05" maxlength="2" data-type="red"></div>
+                <div class="col-auto text-muted">+</div>
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="01" maxlength="2" data-type="blue" style="background:#f0f8ff;"></div>
+                <div class="col"><input type="tel" class="form-control form-control-sm text-center ocr-input" placeholder="02" maxlength="2" data-type="blue" style="background:#f0f8ff;"></div>
+            </div>
+        `;
+        container.appendChild(div);
+        updateOcrCount();
+        // 重新绑定跳转事件
+        bindOcrInputJump();
+    }
+
+    function updateOcrCount() {
+        const count = document.getElementById('ocrTickets').children.length;
+        document.getElementById('ocrCount').textContent = count + ' 注';
+    }
+    
+    function updateOcrEndTerm() {
+        const startTerm = parseInt(document.getElementById('ocrStartTerm').value) || 0;
+        const termCount = parseInt(document.getElementById('ocrTermCount').value) || 1;
+        document.getElementById('ocrEndTerm').value = startTerm + termCount - 1;
+    }
+
+    function submitOcrTickets() {
+        const tickets = [];
+        const rows = document.getElementById('ocrTickets').children;
+        let hasError = false;
+        
+        for(let row of rows) {
+            const inputs = row.querySelectorAll('input');
+            const reds = [];
+            const blues = [];
+            inputs.forEach(inp => {
+                if(inp.dataset.type === 'red' && inp.value) reds.push(inp.value.padStart(2,'0'));
+                if(inp.dataset.type === 'blue' && inp.value) blues.push(inp.value.padStart(2,'0'));
+            });
+            
+            // 验证号码数量
+            if(reds.length !== 5 || blues.length !== 2) {
+                continue; // 跳过不完整的行
+            }
+            
+            // 验证红球范围 1-35
+            const redNums = reds.map(r => parseInt(r));
+            const invalidRed = redNums.some(n => isNaN(n) || n < 1 || n > 35);
+            if(invalidRed) {
+                hasError = true;
+                alert('红球号码必须在 01-35 之间');
+                return;
+            }
+            
+            // 验证红球不重复
+            if(new Set(redNums).size !== 5) {
+                hasError = true;
+                alert('红球号码不能重复');
+                return;
+            }
+            
+            // 验证蓝球范围 1-12
+            const blueNums = blues.map(b => parseInt(b));
+            const invalidBlue = blueNums.some(n => isNaN(n) || n < 1 || n > 12);
+            if(invalidBlue) {
+                hasError = true;
+                alert('蓝球号码必须在 01-12 之间');
+                return;
+            }
+            
+            // 验证蓝球不重复
+            if(new Set(blueNums).size !== 2) {
+                hasError = true;
+                alert('蓝球号码不能重复');
+                return;
+            }
+            
+            tickets.push({ reds: reds.join(','), blues: blues.join(','), note: '拍照添加' });
+        }
+        
+        if(tickets.length === 0) {
+            alert('请填写完整的彩票号码');
+            return;
+        }
+        
+        const startTerm = parseInt(document.getElementById('ocrStartTerm').value);
+        const termCount = parseInt(document.getElementById('ocrTermCount').value) || 1;
+        const endTerm = startTerm + termCount - 1;
+        
+        // 验证期号
+        const latestTermVal = parseInt(document.getElementById('latestTerm').value) || 24000;
+        if(isNaN(startTerm) || startTerm <= 0) {
+            alert('请填写有效的开始期号');
+            return;
+        }
+        
+        // 检查期号是否在合理范围内（23000-26000）
+        if(startTerm < 23000 || startTerm > 26000) {
+            if(!confirm('期号 ' + startTerm + ' 似乎不在合理范围内(23000-26000)，是否继续？')) {
+                return;
+            }
+        }
+        
+        const isSim = document.getElementById('ocrSimCheck') ? document.getElementById('ocrSimCheck').checked : false;
+        
+        fetch('/add_batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tickets: tickets,
+                start_term: startTerm,
+                end_term: endTerm,
+                is_simulation: isSim
+            })
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                alert('成功添加 ' + data.added + ' 注彩票');
+                location.reload();
+            } else {
+                alert('添加失败: ' + data.error);
+            }
+        }).catch(err => {
+            alert('网络错误: ' + err.message);
+        });
+    }
+
+    // 关闭模态框时重置界面
+    document.getElementById('cameraModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('ocrResult').style.display = 'none';
+        document.getElementById('capturedImage').style.display = 'none';
+        document.getElementById('photoGuide').style.display = 'block';
+        document.getElementById('ocrTickets').innerHTML = '';
+        // 重置文件输入框
+        document.getElementById('cameraInput').value = '';
+        document.getElementById('imageInput').value = '';
+    });
+
     document.addEventListener("DOMContentLoaded", function() {
         const inputs = document.querySelectorAll('.jump-input');
         inputs.forEach((input, index) => {
@@ -199,6 +957,21 @@
         });
         function updateEnd() { endIn.value = (parseInt(startIn.value) || 0) + (parseInt(countIn.value) || 1) - 1; }
         startIn.addEventListener('input', updateEnd); countIn.addEventListener('input', updateEnd);
+    });
+</script>
+<!-- 添加更多注按钮 -->
+<script>
+    // 给OCR结果添加"添加更多"按钮
+    document.addEventListener('DOMContentLoaded', function() {
+        const ocrResult = document.getElementById('ocrResult');
+        if(ocrResult) {
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'btn btn-outline-primary btn-sm w-100 mb-3';
+            addBtn.innerHTML = '<i class="fas fa-plus me-2"></i>添加更多彩票';
+            addBtn.onclick = addOcrTicketRow;
+            ocrResult.insertBefore(addBtn, document.getElementById('ocrTickets').nextSibling);
+        }
     });
 </script>
 </body>

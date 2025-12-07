@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最新一期中奖结果 - 大乐透管家</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --accent: #e74c3c;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --success: #27ae60;
+            --warning: #f39c12;
+        }
+        body { background-color: var(--bg-color); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        .header-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 16px; color: white; margin-bottom: 24px; }
+        .ball { display: inline-flex; justify-content: center; align-items: center; width: 36px; height: 36px; border-radius: 50%; font-size: 14px; font-weight: bold; margin: 3px; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
+        .ball-red { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+        .ball-blue { background: linear-gradient(135deg, #74b9ff, #0984e3); }
+        .ball-hit { transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .ball-miss { background: #dfe6e9; color: #b2bec3; box-shadow: none; }
+        .stat-card { background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .stat-card .number { font-size: 2rem; font-weight: 700; }
+        .stat-card.wins .number { color: var(--warning); }
+        .stat-card.prize .number { color: var(--accent); }
+        .user-card { background: var(--card-bg); border-radius: 12px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .user-card-header { background: #f8f9fa; padding: 16px 20px; border-bottom: 1px solid #e9ecef; }
+        .ticket-row { padding: 16px 20px; border-bottom: 1px solid #f5f6fa; }
+        .ticket-row:last-child { border-bottom: none; }
+        .ticket-row.win { background: #fff9e6; border-left: 4px solid var(--warning); }
+        .badge-level { padding: 6px 12px; border-radius: 20px; font-weight: 600; }
+        .badge-win { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+        .badge-nowin { background: #e9ecef; color: var(--text-secondary); }
+        .nav-link-custom { color: var(--text-secondary); padding: 10px 18px; border-radius: 8px; text-decoration: none; transition: all 0.2s; font-weight: 500; }
+        .nav-link-custom:hover { background: #fff5f5; color: var(--accent); }
+        
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 768px) {
+            .container { padding: 10px !important; }
+            .header-card { padding: 20px 15px; border-radius: 12px; margin-bottom: 16px; }
+            .header-card h2 { font-size: 1.2rem; }
+            .header-card p { font-size: 0.8rem; margin-bottom: 15px !important; }
+            
+            /* 号码球 */
+            .ball { width: 30px; height: 30px; font-size: 12px; margin: 2px; }
+            .header-card .ball { width: 32px; height: 32px; }
+            
+            /* 统计卡片 */
+            .stat-card { padding: 15px 10px; }
+            .stat-card .number { font-size: 1.5rem; }
+            
+            /* 用户卡片 */
+            .user-card-header { padding: 12px 15px; flex-wrap: wrap; gap: 8px; }
+            .ticket-row { padding: 12px 15px; }
+            
+            /* 彩票信息 */
+            .badge-level { padding: 4px 10px; font-size: 0.75rem; }
+            
+            /* 中奖统计 */
+            .ticket-row .text-success.small { display: block; margin-left: 0 !important; margin-top: 8px; font-size: 0.75rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .ball { width: 26px; height: 26px; font-size: 11px; }
+            .header-card .ball { width: 28px; height: 28px; }
+            .header-card h2 { font-size: 1.1rem; }
+            .stat-card .number { font-size: 1.3rem; }
+            .nav-link-custom { padding: 6px 10px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4" style="max-width: 1000px;">
+    <!-- 顶部导航 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="/admin" class="nav-link-custom"><i class="fas fa-arrow-left me-2"></i>返回管理后台</a>
+        <a href="/logout" class="nav-link-custom"><i class="fas fa-sign-out-alt me-1"></i>退出</a>
+    </div>
+
+    <!-- 开奖信息头部 -->
+    <div class="header-card text-center">
+        <h2 class="mb-3"><i class="fas fa-trophy me-2"></i>第 {{ latest.term }} 期中奖结果</h2>
+        <p class="mb-3 opacity-75">开奖日期: {{ latest.date }}</p>
+        <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
+            {% for n in latest.red %}<span class="ball ball-red">{{ n }}</span>{% endfor %}
+            <span class="mx-2 text-white fs-4">+</span>
+            {% for n in latest.blue %}<span class="ball ball-blue">{{ n }}</span>{% endfor %}
+        </div>
+        <div class="small opacity-75">奖池滚存: ￥{{ "{:,.0f}".format(latest.pool|float) }}</div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="stat-card wins">
+                <div class="number">{{ total_wins }}</div>
+                <div class="text-muted">中奖注数</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stat-card prize">
+                <div class="number">￥{{ total_prize }}</div>
+                <div class="text-muted">总中奖金额</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户中奖列表 -->
+    <h5 class="mb-3"><i class="fas fa-users me-2 text-primary"></i>用户中奖详情 ({{ results|length }} 人参与)</h5>
+    
+    {% if results %}
+        {% for item in results %}
+        <div class="user-card">
+            <div class="user-card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-user-circle me-2 text-secondary"></i>
+                    <strong>{{ item.user.username }}</strong>
+                    {% if item.user.is_admin_user() %}<span class="badge bg-danger ms-1">Admin</span>{% endif %}
+                </div>
+                <div>
+                    {% if item.total_prize > 0 %}
+                    <span class="badge bg-success"><i class="fas fa-trophy me-1"></i>￥{{ item.total_prize }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">未中奖</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                {% for t in item.tickets %}
+                <div class="ticket-row {{ 'win' if t.prize > 0 else '' }}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">{{ t.ticket.note or '自选号码' }}{% if t.ticket.is_simulation %} <span class="badge bg-pink" style="background:#f093fb;font-size:0.7rem;">模拟</span>{% endif %}</span>
+                        {% if t.prize > 0 %}
+                        <span class="badge-level badge-win">{{ t.level }} ￥{{ t.prize }}</span>
+                        {% else %}
+                        <span class="badge-level badge-nowin">{{ t.level }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap">
+                        {% for n in t.ticket.red_nums.split(',') %}
+                        <span class="ball ball-red {{ 'ball-hit' if n in t.hit_reds else 'ball-miss' }}">{{ n }}</span>
+                        {% endfor %}
+                        <span class="mx-1"></span>
+                        {% for n in t.ticket.blue_nums.split(',') %}
+                        <span class="ball ball-blue {{ 'ball-hit' if n in t.hit_blues else 'ball-miss' }}">{{ n }}</span>
+                        {% endfor %}
+                        {% if t.hit_reds or t.hit_blues %}
+                        <span class="ms-3 text-success small">
+                            <i class="fas fa-check-circle me-1"></i>
+                            前区中{{ t.hit_reds|length }}个
+                            {% if t.hit_blues %}, 后区中{{ t.hit_blues|length }}个{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-ticket-alt fa-3x mb-3 opacity-50"></i>
+            <p>本期暂无用户参与或无有效彩票</p>
+        </div>
+    {% endif %}
+
+    <div class="text-center mt-4 text-muted small">Lottery Admin - Latest Results</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

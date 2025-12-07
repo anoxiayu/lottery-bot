@@ -1,6 +1,11 @@
-Flask==2.3.3
-Flask-SQLAlchemy==3.0.5
-Flask-Login==0.6.2
-requests==2.31.0
-APScheduler==3.10.1
-werkzeug==2.3.7
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.0.0
+Flask-Login>=0.6.0
+requests>=2.31.0
+APScheduler>=3.10.0
+werkzeug>=2.3.0
+# OCR识别依赖 (与 Umi-OCR 底层相同的 PaddleOCR 引擎)
+rapidocr-onnxruntime==1.3.24
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+Pillow>=9.0.0

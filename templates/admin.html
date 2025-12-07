@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 大乐透管家</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --accent: #e74c3c;
+            --accent-light: #fff5f5;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #e9ecef;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #3498db;
+        }
+        body { background-color: var(--bg-color); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        .admin-header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); padding: 25px 30px; border-radius: 16px; margin-bottom: 24px; color: white; box-shadow: 0 4px 15px rgba(231,76,60,0.3); }
+        .stat-card { background: var(--card-bg); border-radius: 12px; padding: 24px 20px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .stat-card .number { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
+        .stat-card .label { color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px; font-weight: 500; }
+        .stat-card.users .number { color: var(--info); }
+        .stat-card.tickets .number { color: var(--success); }
+        .stat-card.wins .number { color: var(--warning); }
+        .stat-card.prize .number { color: var(--accent); }
+        .content-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .card-header-custom { background: #fafbfc; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .card-header-custom h5 { color: var(--text-primary); font-weight: 600; }
+        .table { margin-bottom: 0; }
+        .table th { background: #f8f9fa; color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-color); padding: 12px 16px; }
+        .table td { padding: 14px 16px; vertical-align: middle; border-color: var(--border-color); color: var(--text-primary); }
+        .table tbody tr:hover { background-color: #f8f9fa; }
+        .ball { display: inline-flex; justify-content: center; align-items: center; width: 30px; height: 30px; border-radius: 50%; font-size: 13px; font-weight: bold; margin: 2px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .ball-red { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+        .ball-blue { background: linear-gradient(135deg, #74b9ff, #0984e3); }
+        .badge-admin { background: var(--accent); color: white; font-weight: 500; }
+        .badge-win { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+        .badge-count { background: #e9ecef; color: var(--text-primary); font-weight: 500; }
+        .nav-link-custom { color: var(--text-secondary); padding: 10px 18px; border-radius: 8px; text-decoration: none; transition: all 0.2s; font-weight: 500; }
+        .nav-link-custom:hover { background: var(--accent-light); color: var(--accent); }
+        .user-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+        .user-card-header { background: #f8f9fa; padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .user-card-body { padding: 0; }
+        .ticket-item { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .ticket-item:last-child { border-bottom: none; }
+        .ticket-item:hover { background: #fafbfc; }
+        .win-record { background: var(--accent-light); border-left: 4px solid var(--accent); padding: 12px 16px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .win-record .term { font-weight: 600; color: var(--text-primary); }
+        .win-record .level { color: var(--accent); font-weight: 700; }
+        .win-record .prize { color: var(--success); font-weight: 700; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .status-dot.active { background: var(--success); }
+        .status-dot.inactive { background: #bdc3c7; }
+        .section-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; padding-left: 12px; border-left: 4px solid var(--accent); }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .empty-state i { font-size: 3rem; margin-bottom: 10px; opacity: 0.5; }
+        .draw-display { background: linear-gradient(135deg, #2c3e50, #34495e); padding: 20px; border-radius: 12px; color: white; text-align: center; }
+        .draw-display .term { font-size: 1.2rem; opacity: 0.9; margin-bottom: 10px; }
+        .summary-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .summary-item { background: #f0f0f0; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; color: var(--text-secondary); }
+        .summary-item.highlight { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+        /* 账户管理样式 */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .btn-delete { background: transparent; border: 1px solid #e74c3c; color: #e74c3c; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; transition: all 0.2s; }
+        .btn-delete:hover { background: #e74c3c; color: white; }
+        .btn-delete:disabled { opacity: 0.4; cursor: not-allowed; }
+        .user-disabled { opacity: 0.5; background: #f8f8f8; }
+        .user-disabled .user-card-header { background: #eee; }
+        .badge-disabled { background: #95a5a6; color: white; }
+        .table .user-row-disabled { background: #f5f5f5; opacity: 0.7; }
+        .action-cell { white-space: nowrap; }
+        
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 768px) {
+            .container { padding: 10px !important; }
+            .admin-header { padding: 18px 15px; border-radius: 12px; margin-bottom: 16px; }
+            .admin-header h2 { font-size: 1.3rem; }
+            .admin-header p { font-size: 0.8rem; }
+            
+            /* 顶部导航 */
+            .d-flex.justify-content-between.align-items-center.mb-4 {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .nav-link-custom { padding: 6px 10px; font-size: 0.85rem; }
+            .badge-admin { font-size: 0.75rem !important; padding: 4px 8px !important; }
+            
+            /* 统计卡片 */
+            .stat-card { padding: 15px 10px; }
+            .stat-card .number { font-size: 1.6rem; }
+            .stat-card .label { font-size: 0.75rem; }
+            
+            /* 左右列改为上下 */
+            .row.g-4 > .col-lg-5,
+            .row.g-4 > .col-lg-7 { width: 100%; }
+            
+            /* 表格优化 */
+            .table-responsive { margin: 0 -10px; }
+            .table th, .table td { padding: 10px 8px; font-size: 0.8rem; }
+            .table th { white-space: nowrap; }
+            
+            /* 移动端隐藏原表格列，显示内联信息 */
+            .table th.hide-mobile, .table td.hide-mobile { display: none; }
+            .mobile-info { display: block !important; }
+            
+            /* 操作按钮 */
+            .btn-delete { padding: 3px 8px; font-size: 0.75rem; }
+            .switch { width: 36px; height: 20px; }
+            .switch .slider:before { height: 14px; width: 14px; }
+            input:checked + .slider:before { transform: translateX(16px); }
+            
+            /* 用户卡片 */
+            .user-card-header { padding: 12px 15px; flex-direction: column; gap: 10px; align-items: flex-start !important; }
+            .user-card-header > div:last-child { width: 100%; justify-content: flex-start !important; }
+            .ticket-item { padding: 12px 15px; }
+            
+            /* 号码球 */
+            .ball { width: 26px; height: 26px; font-size: 11px; margin: 1px; }
+            .draw-display .ball { width: 28px; height: 28px; font-size: 12px; }
+            .draw-display .term { font-size: 1rem; }
+            
+            /* 中奖记录 */
+            .win-record { padding: 10px 12px; margin: 6px 0; }
+            .win-record .term { font-size: 0.85rem; }
+            .summary-row { gap: 6px; }
+            .summary-item { font-size: 0.75rem; padding: 3px 8px; }
+            
+            /* 警告提示 */
+            .alert { font-size: 0.85rem; padding: 12px 15px; }
+            .alert .badge { font-size: 0.7rem !important; padding: 3px 6px !important; margin: 2px !important; }
+            
+            /* 卡片标题 */
+            .card-header-custom { padding: 12px 15px; }
+            .card-header-custom h5 { font-size: 1rem; }
+            .section-title { font-size: 1rem; padding-left: 10px; margin-bottom: 12px; }
+            
+            /* 内容卡片 */
+            .content-card { border-radius: 10px; margin-bottom: 15px; }
+            .draw-display { padding: 15px; border-radius: 10px; }
+        }
+        
+        @media (max-width: 480px) {
+            .stat-card .number { font-size: 1.3rem; }
+            .stat-card .label { font-size: 0.7rem; }
+            .ball { width: 24px; height: 24px; font-size: 10px; }
+            .table th, .table td { padding: 8px 6px; font-size: 0.75rem; }
+            
+            /* 密码重置请求布局 */
+            .alert .d-inline-flex { display: flex !important; width: 100%; margin-bottom: 8px !important; }
+        }
+        
+        /* 移动端内联信息默认隐藏 */
+        .mobile-info { display: none; font-size: 0.75rem; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container py-4" style="max-width: 1200px;">
+    <!-- 顶部导航 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/" class="nav-link-custom"><i class="fas fa-arrow-left me-2"></i>返回首页</a>
+            <span class="badge badge-admin px-3 py-2"><i class="fas fa-shield-alt me-1"></i>管理员: {{ user.username }}</span>
+        </div>
+        <a href="/logout" class="nav-link-custom"><i class="fas fa-sign-out-alt me-1"></i>退出</a>
+    </div>
+
+    <!-- 头部 -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+          <i class="fas fa-info-circle me-2"></i>{{ messages[0] }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endif %}
+    {% endwith %}
+    
+    <div class="admin-header">
+        <h2 class="mb-1"><i class="fas fa-tachometer-alt me-2"></i>管理控制台</h2>
+        <p class="mb-0 opacity-75">数据库概览与用户中奖统计 | 更新时间: {{ now().strftime('%Y-%m-%d %H:%M') if now is defined else '' }}</p>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card users">
+                <div class="number">{{ users|length }}</div>
+                <div class="label"><i class="fas fa-users me-1"></i>注册用户</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card tickets">
+                <div class="number">{{ all_tickets|length }}</div>
+                <div class="label"><i class="fas fa-ticket-alt me-1"></i>彩票总数</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card wins">
+                <div class="number">{{ user_stats|sum(attribute='win_count') }}</div>
+                <div class="label"><i class="fas fa-trophy me-1"></i>总中奖次数</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card prize">
+                <div class="number">￥{{ user_stats|sum(attribute='total_prize') }}</div>
+                <div class="label"><i class="fas fa-coins me-1"></i>总中奖金额</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 待审核用户提示 -->
+    {% set pending_count = 0 %}
+    {% for u in users %}
+        {% if not u.is_approved and not u.is_admin_user() %}{% set pending_count = pending_count + 1 %}{% endif %}
+    {% endfor %}
+    {% if pending_count > 0 %}
+    <div class="alert alert-warning mb-4">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>待审核用户:</strong> {{ pending_count }} 个用户等待审核
+        <span class="ms-3">
+            {% for pu in users %}
+                {% if not pu.is_approved and not pu.is_admin_user() %}
+                <a href="/admin/approve_user/{{ pu.id }}" class="badge bg-warning text-dark text-decoration-none me-1">{{ pu.username }}</a>
+                {% endif %}
+            {% endfor %}
+        </span>
+    </div>
+    {% endif %}
+
+    <!-- 密码重置请求 -->
+    {% if password_resets %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-key me-2"></i>
+        <strong>密码重置请求:</strong> {{ password_resets|length }} 个请求待处理
+        <div class="mt-2">
+            {% for pr in password_resets %}
+            <div class="d-inline-flex align-items-center bg-white rounded px-2 py-1 me-2 mb-1" style="border: 1px solid #dee2e6;">
+                <span class="fw-bold me-2">{{ pr.user.username }}</span>
+                <span class="text-muted small me-2">{{ pr.created_at.strftime('%m-%d %H:%M') }}</span>
+                <a href="/admin/password_reset/{{ pr.id }}/approve" class="btn btn-sm btn-success me-1" onclick="return confirm('确认批准密码重置？')">
+                    <i class="fas fa-check"></i>
+                </a>
+                <a href="/admin/password_reset/{{ pr.id }}/reject" class="btn btn-sm btn-danger" onclick="return confirm('确认拒绝密码重置？')">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- 左侧列 -->
+        <div class="col-lg-5">
+            <!-- 最新开奖信息 -->
+            {% if latest %}
+            <div class="content-card mb-4">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <h5 class="m-0"><i class="fas fa-dice text-danger me-2"></i>最新开奖</h5>
+                    <a href="/admin/latest_results" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-trophy me-1"></i>查看本期中奖
+                    </a>
+                </div>
+                <div class="p-4">
+                    <div class="draw-display">
+                        <div class="term">第 {{ latest.term }} 期　|　{{ latest.date }}</div>
+                        <div class="d-flex align-items-center justify-content-center gap-2 my-3">
+                            {% for n in latest.red %}<span class="ball ball-red">{{ n }}</span>{% endfor %}
+                            <span class="mx-2 text-white">+</span>
+                            {% for n in latest.blue %}<span class="ball ball-blue">{{ n }}</span>{% endfor %}
+                        </div>
+                        <div class="small opacity-75">奖池滚存: ￥{{ "{:,.0f}".format(latest.pool|float) }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 系统设置 -->
+            <div class="content-card mb-4">
+                <div class="card-header-custom">
+                    <h5 class="m-0"><i class="fas fa-cog text-secondary me-2"></i>系统设置</h5>
+                </div>
+                <div class="p-3">
+                    <table class="table mb-0">
+                        <tr>
+                            <td style="width: 150px;"><strong>推送时间</strong></td>
+                            <td><span class="badge bg-primary">{{ setting.push_time if setting else '22:00' }}</span> <span class="text-secondary">(周一/三/六)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>管理员账户</strong></td>
+                            <td>
+                                {% for u in users %}
+                                    {% if u.is_admin_user() %}
+                                    <span class="badge badge-admin">{{ u.username }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 用户列表 -->
+            <div class="content-card">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <h5 class="m-0"><i class="fas fa-database text-info me-2"></i>用户数据库</h5>
+                    <span class="badge badge-count">{{ users|length }} 人</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>用户名</th>
+                                <th class="hide-mobile">彩票</th>
+                                <th class="hide-mobile">审核</th>
+                                <th class="hide-mobile">状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr class="{{ 'user-row-disabled' if u.is_disabled else '' }}">
+                                <td><strong>#{{ u.id }}</strong></td>
+                                <td>
+                                    {{ u.username }}
+                                    {% if u.is_admin_user() %}<span class="badge badge-admin ms-1">Admin</span>{% endif %}
+                                    {% if u.is_disabled %}<span class="badge badge-disabled ms-1">已禁用</span>{% endif %}
+                                    {% if not u.is_approved and not u.is_admin_user() %}<span class="badge bg-warning text-dark ms-1">待审核</span>{% endif %}
+                                    <!-- 移动端内联显示彩票/审核/状态 -->
+                                    <div class="mobile-info text-muted">
+                                        <div class="mb-1">
+                                            <span class="me-2"><i class="fas fa-ticket-alt"></i> {{ u.tickets|length }}张</span>
+                                            {% if not u.is_admin_user() %}
+                                                {% if u.is_approved %}
+                                                <span class="text-success me-2"><i class="fas fa-check-circle"></i> 已审核</span>
+                                                {% else %}
+                                                <span class="text-warning me-2"><i class="fas fa-clock"></i> 待审核</span>
+                                                {% endif %}
+                                                {% if u.is_disabled %}
+                                                <span class="text-danger"><i class="fas fa-ban"></i> 已禁用</span>
+                                                {% else %}
+                                                <span class="text-success"><i class="fas fa-check"></i> 正常</span>
+                                                {% endif %}
+                                            {% else %}
+                                            <span class="text-success"><i class="fas fa-shield-alt"></i> 管理员</span>
+                                            {% endif %}
+                                        </div>
+                                        <!-- 移动端操作按钮 -->
+                                        {% if not u.is_admin_user() %}
+                                        <div class="mt-2 d-flex gap-2 flex-wrap">
+                                            <a href="/admin/approve_user/{{ u.id }}" class="btn btn-sm {{ 'btn-success' if u.is_approved else 'btn-warning' }} py-1 px-2" style="font-size: 0.7rem;">
+                                                {% if u.is_approved %}<i class="fas fa-check"></i> 已审核{% else %}<i class="fas fa-clock"></i> 待审核{% endif %}
+                                            </a>
+                                            <a href="/admin/toggle_user/{{ u.id }}" class="btn btn-sm {{ 'btn-danger' if not u.is_disabled else 'btn-outline-success' }} py-1 px-2" style="font-size: 0.7rem;">
+                                                {% if u.is_disabled %}<i class="fas fa-play"></i> 启用{% else %}<i class="fas fa-ban"></i> 禁用{% endif %}
+                                            </a>
+                                            {% if u.is_disabled %}
+                                            <a href="/admin/delete_user/{{ u.id }}" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 0.7rem;" onclick="return confirm('确定要删除用户 {{ u.username }} 吗？')">
+                                                <i class="fas fa-trash-alt"></i> 删除
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="hide-mobile"><span class="badge badge-count">{{ u.tickets|length }}</span></td>
+                                <td class="hide-mobile">
+                                    {% if not u.is_admin_user() %}
+                                    <a href="/admin/approve_user/{{ u.id }}" class="btn btn-sm {{ 'btn-success' if u.is_approved else 'btn-warning' }}" title="点击切换审核状态">
+                                        {% if u.is_approved %}
+                                        <i class="fas fa-check"></i> 已审核
+                                        {% else %}
+                                        <i class="fas fa-clock"></i> 待审核
+                                        {% endif %}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-success"><i class="fas fa-check-circle"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td class="hide-mobile">
+                                    {% if not u.is_admin_user() %}
+                                    <a href="/admin/toggle_user/{{ u.id }}" class="text-decoration-none" title="点击切换状态">
+                                        <label class="switch" style="pointer-events: none;">
+                                            <input type="checkbox" {{ 'checked' if not u.is_disabled else '' }}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-success"><i class="fas fa-shield-alt"></i> 受保护</span>
+                                    {% endif %}
+                                </td>
+                                <td class="action-cell">
+                                    {% if not u.is_admin_user() %}
+                                        {% if u.is_disabled %}
+                                        <a href="/admin/delete_user/{{ u.id }}" class="btn-delete" onclick="return confirm('确定要删除用户 {{ u.username }} 吗？此操作不可撤销！')">
+                                            <i class="fas fa-trash-alt me-1"></i>删除
+                                        </a>
+                                        {% else %}
+                                        <button class="btn-delete" disabled title="需先禁用才能删除">
+                                            <i class="fas fa-trash-alt me-1"></i>删除
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="text-secondary">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧列 - 用户中奖详情 -->
+        <div class="col-lg-7">
+            <div class="section-title">用户中奖详情 <span class="text-secondary small">(禁用用户不显示)</span></div>
+            
+            {% for stat in user_stats %}
+            {% if not stat.user.is_disabled %}
+            <div class="user-card">
+                <div class="user-card-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-user-circle fa-lg text-secondary"></i>
+                        <strong>{{ stat.user.username }}</strong>
+                        {% if stat.user.is_admin_user() %}<span class="badge badge-admin">Admin</span>{% endif %}
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge badge-count"><i class="fas fa-ticket-alt me-1"></i>{{ stat.ticket_count }} 张</span>
+                        {% if stat.win_count > 0 %}
+                        <span class="badge badge-win"><i class="fas fa-trophy me-1"></i>{{ stat.win_count }} 次</span>
+                        <span class="badge bg-success">￥{{ stat.total_prize }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="user-card-body">
+                    {% if stat.tickets %}
+                        {% for ticket_info in stat.tickets %}
+                        <div class="ticket-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong class="text-primary">{{ ticket_info.ticket.note or '自选号码' }}</strong>
+                                    <span class="text-secondary ms-2">第{{ ticket_info.ticket.start_term }}-{{ ticket_info.ticket.end_term }}期</span>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                {% for n in ticket_info.ticket.red_nums.split(',') %}<span class="ball ball-red">{{ n }}</span>{% endfor %}
+                                <span class="mx-1 text-secondary">+</span>
+                                {% for n in ticket_info.ticket.blue_nums.split(',') %}<span class="ball ball-blue">{{ n }}</span>{% endfor %}
+                            </div>
+                            
+                            {% set winning_results = ticket_info.results|selectattr('prize', 'gt', 0)|list %}
+                            {% if winning_results %}
+                                {% for r in winning_results %}
+                                <div class="win-record">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="term">第{{ r.term }}期</span>
+                                            <span class="text-secondary">{{ r.date }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="level">{{ r.level }}</span>
+                                            <span class="prize ms-2">￥{{ r.prize }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span class="summary-item {% if r.hit_reds %}highlight{% endif %}">
+                                            前区命中: {% if r.hit_reds %}{{ r.hit_reds|join(', ') }}{% else %}无{% endif %}
+                                        </span>
+                                        <span class="summary-item {% if r.hit_blues %}highlight{% endif %}">
+                                            后区命中: {% if r.hit_blues %}{{ r.hit_blues|join(', ') }}{% else %}无{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-secondary small"><i class="fas fa-info-circle me-1"></i>暂无中奖记录</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>该用户暂无彩票记录</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+
+            {% if not user_stats %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <p>暂无用户数据</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-center mt-4 text-secondary small">Lottery Admin Panel V2.0</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
