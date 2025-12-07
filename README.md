@@ -1,18 +1,18 @@
 
 ---
 
-# 🎲 大乐透管家 (Lottery Bot) v10
+# 🎲 大乐透管家 (Lottery Bot)
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.3+-green.svg?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Docker Image](https://img.shields.io/badge/Docker%20Pull-anoxiayu%2Flottery--bot-blue.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-> **专为 NAS 打造的自动化彩票管家**
+> **专为 NAS 打造的自动化大乐透管家**
 >
 > 📦 **Docker Hub 官方镜像:** [**anoxiayu/lottery-bot**](https://hub.docker.com/repository/docker/anoxiayu/lottery-bot/general)
 
-基于 Python Flask 构建的大乐透中奖情况查询与定时推送服务。专为威联通 (QNAP)、群晖 (Synology) 及 Docker 环境设计。支持多用户管理、多期连买自动核对、历史中奖查询以及 Server酱微信推送。
+基于 Python Flask 构建的大乐透中奖情况查询与定时推送服务。专为威联通 (QNAP)、群晖 (Synology) 及 Docker 环境设计。支持多用户管理、多期连买自动核对、历史中奖查询以及[Server酱](https://sct.ftqq.com/)信推送。
 
 ---
 
@@ -20,7 +20,7 @@
 
 *   **📊 全自动兑奖**：每日定时同步官方开奖数据（周一/三/六），自动计算中奖等级与金额（支持一等奖至九等奖所有奖级）。
 *   **🎫 多期智能管理**：支持设置"开始期号"与"连买期数"（1-30期），系统自动计算有效期，过期自动归档。
-*   **📲 隐私推送**：集成 [Server酱](https://sct.ftqq.com/)，支持 Key 前端打码显示。仅在开奖日且在有效期内推送。
+*   **📲 隐私推送**：集成Server酱，支持 Key 前端打码显示。仅在开奖日且在有效期内推送。
 *   **🕒 自定义计划**：支持在网页端直接修改每日自动检查的时间（默认 22:00），无需重启容器。
 *   **📜 历史回溯报告**：一键生成某注号码在过去 50 期内的中奖情况汇总，并推送到微信。
 *   **🎨 拟态 UI 设计**：采用精美的 3D 拟态风格圆球设计，完美适配手机端操作。
@@ -61,7 +61,7 @@
 - ✅ **离线识别**：不需要网络，本地处理
 - ✅ **高精度**：基于 PaddleOCR，中文识别效果好
 - ✅ **智能矫正**：自动检测彩票边缘并透视矫正
-- ✅ **Docker 支持**：容器自动包含所有依赖
+- ✅ **Docker支持**：容器自动包含所有依赖
 
 ### 识别流程
 
@@ -179,5 +179,90 @@ docker run -d -p 5000:5000 -v $(pwd)/data:/app/data my-lotto-local
 ---
 
 <div align="center">
-    <small>Lottery Assistant v10 | Powered by Flask & Docker | Made by Anoxiayu</small>
+    <small>Lottery bot | Powered by Flask & Docker | Made by Anoxiayu</small>
 </div>
+```
+
+```
+# 大乐透管家
+
+[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.3+-green?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Docker](https://img.shields.io/badge/Docker-anoxiayu%2Flottery--bot-blue?logo=docker&logoColor=white)](https://hub.docker.com/r/anoxiayu/lottery-bot)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+专为 NAS 打造的大乐透自动兑奖与推送服务，支持多用户、拍照识别、Server酱推送。
+
+## 功能特性
+
+- **自动兑奖** - 定时同步开奖数据，自动计算中奖等级与金额
+- **多期连买** - 支持 1-20 期连买，自动计算有效期
+- **拍照识别** - 集成 OCR，自动识别彩票号码和期数
+- **微信推送** - 集成 [Server酱](https://sct.ftqq.com/)，开奖日自动推送
+- **用户管理** - 多用户隔离，管理员审核，密码找回
+- **数据持久化** - Docker 挂载存储，重启不丢失
+
+## 技术栈
+
+| 组件 | 技术 |
+|------|------|
+| 后端 | [Flask](https://flask.palletsprojects.com/) + [APScheduler](https://apscheduler.readthedocs.io/) |
+| OCR | [RapidOCR](https://github.com/RapidAI/RapidOCR) (基于 [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)) |
+| 图像处理 | [OpenCV](https://opencv.org/) + [Pillow](https://pillow.readthedocs.io/) |
+| 部署 | Docker |
+
+## 快速开始
+
+```bash
+# 拉取镜像
+docker pull anoxiayu/lottery-bot:latest
+
+# 运行容器
+docker run -d \
+  --name lottery-bot \
+  -p 5000:5000 \
+  -v /your/data/path:/app/data \
+  --restart unless-stopped \
+  anoxiayu/lottery-bot:latest
+```
+
+访问 `http://localhost:5000`，首个注册用户自动成为管理员。
+
+> ⚠️ **必须挂载 `/app/data`**，否则重启后数据丢失
+
+## OCR 识别
+
+基于 [RapidOCR](https://github.com/RapidAI/RapidOCR) 实现离线彩票识别：
+
+```
+图片输入 → EXIF修正 → 边缘检测 → 透视矫正 → 图像增强 → OCR识别 → 号码解析
+```
+
+**识别能力：**
+- 自动拆分粘连数字 (`0304` → `03`, `04`)
+- 识别期号、连买期数
+- 过滤干扰信息（开奖、合计、金额等）
+
+## 本地开发
+
+```bash
+git clone <repo-url>
+cd lottery-bot
+pip install -r requirements.txt
+python app.py
+```
+
+## 开源引用
+
+- [RapidOCR](https://github.com/RapidAI/RapidOCR) - 跨平台 OCR 库
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) - OCR 模型引擎
+- [OpenCV](https://github.com/opencv/opencv) - 图像处理
+- [Flask](https://github.com/pallets/flask) - Web 框架
+
+## License
+
+[MIT](LICENSE)
+
+## 免责声明
+
+本项目为个人开源项目，与中国体育彩票无关。开奖数据来自网络，**所有结果以官方公告为准**。本软件不具备购彩功能，作者不对使用本软件产生的任何损失负责。理性购彩，禁止沉迷。
